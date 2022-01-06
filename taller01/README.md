@@ -8,3 +8,11 @@
 jccloudaws/jccloudaws is a ✨ special ✨ repository because its `README.md` (this file) appears on your GitHub profile.
 You can click the Preview link to take a look at your changes.
 --->
+Taller01:
+- Ingresar a cloud9 
+- En la terminal ejecutar : ssh-keygen
+- lanzar el siguiente comando : git clone git@github.com:jccloudaws/jccloudaws.git
+- cd jccloudaws/taller01
+- editar el archivo deploy.sh (linea)
+- chmod +x ./deploy.sh
+- ./deploy.sh dev
