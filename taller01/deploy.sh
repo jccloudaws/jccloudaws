@@ -2,9 +2,9 @@
 
 ENV=$1
 
-S3_BUCKET="rpa-cfn-artifacts-40888866-us-east-1"
+S3_BUCKET="rpa-cfn-artifacts-{tu-dni}-us-east-1"
 
-aws s3 mb s3://rpa-cfn-artifacts-40888866-us-east-1
+aws s3 mb s3://rpa-cfn-artifacts-{tu-dni}-us-east-1
 
 STACK_NAME="rpa-capacitacion-cloud-aws-taller-lambda-01"
 REGION="us-east-1"
