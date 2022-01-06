@@ -15,23 +15,29 @@ Parameters:
     Description: name Stack
     Type: String
 Resources:
-  FunctionCF:
-    Type: AWS::Lambda::Function
+  Function:
+    Type: AWS::Serverless::Function
     Properties:
-      Code:
-        S3Bucket: rpa-cfn-artifacts-40888866-us-east-1
-        S3Key: RPA-TALLER-LAMBDA-01/5b3206a40f5eb26904dd093e4d07f052
+      CodeUri: s3://rpa-cfn-artifacts-40888866-us-east-1/23874ec0f1ee0b8d1a35d9974cacbbc9
       Handler: lambda_function.lambda_handler
       Runtime: python3.7
       FunctionName:
-        Fn::Sub: ibk-${team}-${application}-${stack}-${environment}-lambda-cf
-      Description: Python Function to return specific TimeZone time
+        Fn::Sub: ibk-${team}-${application}-${stack}-${environment}-lambda
+      Description: Lambda taller01
       MemorySize: 128
-      Timeout: 5
+      Timeout: 3
       Role:
         Fn::GetAtt:
         - rRoleLambdaExecution
         - Arn
+  FunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Join:
+        - ''
+        - - /aws/lambda/
+          - Fn::Sub: ibk-${team}-${application}-${stack}-${environment}-lambda
   rRoleLambdaExecution:
     Type: AWS::IAM::Role
     Properties:
@@ -56,4 +62,40 @@ Resources:
             - logs:CreateLogStream
             - logs:CreateLogGroup
             - logs:PutLogEvents
-            Resource: '*'
+            Resource:
+              Fn::GetAtt:
+              - FunctionLogGroup
+              - Arn
+  AccountIdParamaterTest:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: id account aws
+      Name: /IBK/xxxx/test/AccountId
+      Type: String
+      Value: '204453042683'
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: test
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+      AutoVerifiedAttributes:
+      - email
+      UsernameAttributes:
+      - email
+      Schema:
+      - Name: name
+        AttributeDataType: String
+        Mutable: true
+        Required: true
+      - Name: email
+        AttributeDataType: String
+        Mutable: false
+        Required: true
+Outputs:
+  lambda:
+    Value:
+      Fn::GetAtt:
+      - Function
+      - Arn

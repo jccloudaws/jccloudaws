@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: Stack taller lambda 01
+Description: Stack taller lambda 04
 
 Parameters:
   team:
@@ -14,20 +14,23 @@ Parameters:
     Type: String
   stack:
     Description: "name Stack"
+    Type: String
+  bucket:
+    Description: "name bucket"
     Type: String    
   
 Resources:
-  FunctionCF:
-    Type: AWS::Lambda::Function
+  Function:
+    Type: AWS::Serverless::Function
     Properties:
-      Code: ./src
+      CodeUri: ./src
       Handler: lambda_function.lambda_handler
       Runtime: python3.7
-      FunctionName: 
-        !Sub "ibk-${team}-${application}-${stack}-${environment}-lambda-cf"
-      Description: Python Function to return specific TimeZone time
+      FunctionName:
+        !Sub "ibk-${team}-${application}-${stack}-${environment}-lambda"
+      Description: "Lambda taller01"
       MemorySize: 128
-      Timeout: 5
+      Timeout: 3
       Role: !GetAtt rRoleLambdaExecution.Arn
   
   #FunctionSam:
@@ -75,6 +78,38 @@ Resources:
                   - logs:PutLogEvents
                 Resource: "*"
                 #!GetAtt FunctionLogGroup.Arn
+              - Sid: S3Policy
+                Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource: 
+                  - !Sub "arn:aws:s3:::${bucket}"
+                  - !Sub "arn:aws:s3:::${bucket}/*"
+                  
+  Rule:
+    Type: "AWS::Events::Rule"
+    Properties:
+      Name: !Join [ '-', [!Ref team, !Ref stack, !Ref application,"cron","rule"]]
+      Description: Trigger Lambda every minute
+      State: ENABLED
+      ScheduleExpression: "cron(*/1 * * * ? *)"
+      Targets:
+        - Id: !Join [ '-', [ "ibk", !Ref team, !Ref stack, !Ref application,"cron","rule"]]
+          Arn: !GetAtt Function.Arn
+          Input: !Sub |
+            {                            
+              "env": "${environment}"
+            }
+  PermissionEventsInvokeLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref Function
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: !GetAtt Rule.Arn
+
 #Outputs:
+#DependsOn:
 #  lambda:
 #    Value: !GetAtt Function.Arn

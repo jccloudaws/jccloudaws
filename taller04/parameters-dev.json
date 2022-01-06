@@ -1,0 +1,22 @@
+[
+    {
+        "ParameterKey": "team",
+        "ParameterValue": "rpa"
+    },
+    {
+        "ParameterKey": "stack",
+        "ParameterValue": "lambda"
+    },
+    {
+        "ParameterKey": "environment",
+        "ParameterValue": "dev"
+    },
+    {
+        "ParameterKey": "application",
+        "ParameterValue": "taller04"
+    },
+    {
+        "ParameterKey": "bucket",
+        "ParameterValue": "rpa-cfn-artifacts-40888866-us-east-1"
+    }
+]
