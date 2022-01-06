@@ -1,0 +1,74 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Stack taller lambda 01
+Parameters:
+  team:
+    Description: name team
+    Type: String
+  environment:
+    Description: name envoriment
+    Type: String
+  application:
+    Description: name Application
+    Type: String
+  stack:
+    Description: name Stack
+    Type: String
+Resources:
+  Function:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: Function
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.7
+      FunctionName:
+        Fn::Sub: ibk-${team}-${application}-${stack}-${environment}-lambda
+      Description: Lambda taller01
+      MemorySize: 128
+      Timeout: 3
+      Role:
+        Fn::GetAtt:
+        - rRoleLambdaExecution
+        - Arn
+  FunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Join:
+        - ''
+        - - /aws/lambda/
+          - Fn::Sub: ibk-${team}-${application}-${stack}-${environment}-lambda
+  rRoleLambdaExecution:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName:
+        Fn::Sub: ibk-${team}-${application}-${stack}-${environment}-execute-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+      - PolicyName:
+          Fn::Sub: ibk-${team}-${application}-${stack}-${environment}-policy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Sid: LogGroupPolicy
+            Effect: Allow
+            Action:
+            - logs:CreateLogStream
+            - logs:CreateLogGroup
+            - logs:PutLogEvents
+            Resource:
+              Fn::GetAtt:
+              - FunctionLogGroup
+              - Arn
+Outputs:
+  lambda:
+    Value:
+      Fn::GetAtt:
+      - Function
+      - Arn
