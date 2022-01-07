@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Stack INTERCORP
+Parameters:
+  team:
+    Description: name team
+    Type: String
+  environment:
+    Description: name envoriment
+    Type: String
+  application:
+    Description: name Application
+    Type: String
+  stack:
+    Description: name Stack
+    Type: String
+  credentialsEmblue:
+    Description: name Stack
+    Type: String
+Resources:
+  layers:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3.us-east-1.amazonaws.com/rpa-cfn-artifacts-40888866-us-east-1/RPA-TALLER-LAMBDA-07/3abe78d3aee086118b86c58e81c7a414.template
+      Parameters:
+        team:
+          Ref: team
+        environment:
+          Ref: environment
+        application:
+          Ref: application
+        stack:
+          Ref: stack
+  lambda:
+    DependsOn: layers
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3.us-east-1.amazonaws.com/rpa-cfn-artifacts-40888866-us-east-1/RPA-TALLER-LAMBDA-07/6d14f8bfcb7904fe1b4ce7b03242004a.template
+      Parameters:
+        team:
+          Ref: team
+        environment:
+          Ref: environment
+        application:
+          Ref: application
+        stack:
+          Ref: stack
+        layerCommon:
+          Fn::GetAtt:
+          - layers
+          - Outputs.oLayerCommom
+        credentialsEmblue:
+          Ref: credentialsEmblue

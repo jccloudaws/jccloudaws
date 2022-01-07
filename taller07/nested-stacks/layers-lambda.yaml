@@ -24,7 +24,7 @@ Resources:
     Properties:
       CompatibleRuntimes:
         - python3.7
-      ContentUri: ../src/layers/
+      ContentUri: ../layers/
       Description: Common Layer Stack
       LayerName: !Sub "${team}-${stack}-${application}-commom-layer"
 

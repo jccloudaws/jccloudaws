@@ -34,7 +34,7 @@ Resources:
     DependsOn: layers
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: ./nested-stacks/api-authorization.yaml
+      TemplateURL: ./nested-stacks/lambda.yaml
       Parameters:
         team: !Ref team
         environment: !Ref environment
