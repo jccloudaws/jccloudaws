@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: Stack taller lambda 04
+Description: Stack taller lambda 05
 
 Parameters:
   team:
@@ -79,7 +79,7 @@ Resources:
     DependsOn: S3InvokeLambdaPermission
     Type: AWS::S3::Bucket
     #DeletionPolicy: Retain
-    #Condition: ShouldCreateBucket
+    Condition: ShouldCreateBucket
     Properties:
       BucketName: !Sub "${team}-${application}-${stack}-${environment}-${AWS::Region}-${AWS::AccountId}-bucket"
       NotificationConfiguration:
