@@ -32,27 +32,6 @@ Resources:
       MemorySize: 128
       Timeout: 3
       Role: !GetAtt rRoleLambdaExecution.Arn
-  
-  #FunctionSam:
-  #  Type: AWS::Serverless::Function
-  #  Properties:
-  #    CodeUri: ./src
-  #    Handler: lambda_function.lambda_handler
-  #    Runtime: python3.7
-  #    FunctionName:
-  #      !Sub "${team}-${application}-${stack}-${environment}-lambda-Sam"
-  #    Description: "Lambda taller01"
-  #    MemorySize: 128
-  #    Timeout: 3
-  #    #Role: !GetAtt rRoleLambdaExecution.Arn        
-  
-  #FunctionLogGroup:
-  #  Type: "AWS::Logs::LogGroup"
-  #  Properties:
-  #    LogGroupName: !Join
-  #      - ""
-  #      - - /aws/lambda/
-  #        - !Sub "${team}-${application}-${stack}-${environment}-lambda"
 
   rRoleLambdaExecution:
     Type: "AWS::IAM::Role"
