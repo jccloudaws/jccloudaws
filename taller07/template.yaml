@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Stack INTERCORP
+
+Parameters:
+
+  team:
+    Description: "name team"
+    Type: String
+  environment:
+    Description: "name envoriment"
+    Type: String
+  application:
+    Description: "name Application"
+    Type: String
+  stack:
+    Description: "name Stack"
+    Type: String
+  credentialsEmblue:
+    Description: "name Stack"
+    Type: String
+  
+    
+Resources:
+  layers:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./nested-stacks/layers-lambda.yaml
+      Parameters:
+        team: !Ref team
+        environment: !Ref environment
+        application: !Ref application
+        stack: !Ref stack        
+  lambda:
+    DependsOn: layers
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./nested-stacks/api-authorization.yaml
+      Parameters:
+        team: !Ref team
+        environment: !Ref environment
+        application: !Ref application
+        stack: !Ref stack
+        layerCommon: !GetAtt ["layers", "Outputs.oLayerCommom"]
+        credentialsEmblue: !Ref credentialsEmblue
+  

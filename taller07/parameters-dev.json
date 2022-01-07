@@ -1,0 +1,22 @@
+[
+    {
+        "ParameterKey": "team",
+        "ParameterValue": "rpa"
+    },
+    {
+        "ParameterKey": "stack",
+        "ParameterValue": "lambda"
+    },
+    {
+        "ParameterKey": "environment",
+        "ParameterValue": "dev"
+    },
+    {
+        "ParameterKey": "application",
+        "ParameterValue": "taller07"
+    },
+    {
+        "ParameterKey": "credentialsEmblue",
+        "ParameterValue": "/RPA/NEWSLETTER/EMBLUE"
+    }
+]

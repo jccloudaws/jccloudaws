@@ -1,0 +1,140 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Stack taller lambda 06
+
+Parameters:
+  team:
+    Description: "name team"
+    Type: String
+  environment:
+    Description: "name envoriment"
+    Type: String
+  application:
+    Description: "name Application"
+    Type: String
+  stack:
+    Description: "name Stack"
+    Type: String
+    
+  credentialsEmblue:
+    Description: "name table config dynamodb"
+    Type: String
+  
+Globals:
+  Function:
+    Timeout: 5
+    MemorySize: 512
+
+Resources:
+  Function:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.7
+      FunctionName:
+        !Sub "${team}-${application}-${stack}-${environment}-lambda"
+      Description: "Lambda taller01"
+      MemorySize: 128
+      Timeout: 3
+      Role: !GetAtt rRoleLambdaExecution.Arn
+      Environment:
+        Variables:
+          table: !Join ['-', [!Ref team ,!Ref stack, !Ref application,"config","table"]]
+          credentialsEmblue: !Ref credentialsEmblue
+          
+  rRoleLambdaExecution:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub "${team}-${application}-${stack}-${environment}-execute-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: !Sub "${team}-${application}-${stack}-${environment}-policy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: LogGroupPolicy
+                Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:CreateLogGroup
+                  - logs:PutLogEvents
+                Resource: "*"
+              - Sid: secretmanagerPolicy
+                Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !Sub "arn:aws:secretsmanager:*:${AWS::AccountId}:secret:/RPA/*"
+              - Sid: DynPolicy
+                Effect: Allow
+                Action:
+                  - "dynamodb:DescribeTable"
+                  - "dynamodb:GetItem"           
+                  - "dynamodb:BatchGetItem"
+                  - "dynamodb:Scan"
+                  - "dynamodb:Query"
+                  - "dynamodb:GetRecords"
+                Resource: !Sub "arn:aws:dynamodb:*:${AWS::AccountId}:table/rpa-*"
+                  
+  TableConfig:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Join ['-', [!Ref team ,!Ref stack, !Ref application,"config","table"]]
+      AttributeDefinitions:
+        - AttributeName: "marca"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "marca"
+          KeyType: "HASH"
+      BillingMode: PAY_PER_REQUEST
+
+  RuleTrome:
+    Type: "AWS::Events::Rule"
+    Properties:
+      Name: !Join [ '-', [!Ref team, !Ref stack, !Ref application,"cron","rule-trome"]]
+      Description: Trigger Lambda every 20 hrs
+      State: ENABLED
+      ScheduleExpression: "cron(* 20 * * ? *)"
+      Targets:
+        - Id: !Join [ '-', [!Ref team, !Ref stack, !Ref application,"cron","rule"]]
+          Arn: !GetAtt Function.Arn
+          Input: !Sub |
+            {                            
+              "marca": "trome"
+            }
+  Rulep21:
+    Type: "AWS::Events::Rule"
+    Properties:
+      Name: !Join [ '-', [!Ref team, !Ref stack, !Ref application,"cron","rule-p21"]]
+      Description: Trigger Lambda every 20 hrs
+      State: ENABLED
+      ScheduleExpression: "cron(*/30 19 * * ? *)"
+      Targets:
+        - Id: !Join [ '-', [ !Ref team, !Ref stack, !Ref application,"cron","rule"]]
+          Arn: !GetAtt Function.Arn
+          Input: !Sub |
+            {                            
+              "marca": "peru21"
+            }
+            
+  PermissionEventsTromeInvokeLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref Function
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: !GetAtt RuleTrome.Arn
+  
+  PermissionEventsP21InvokeLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref Function
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: !GetAtt Rulep21.Arn
