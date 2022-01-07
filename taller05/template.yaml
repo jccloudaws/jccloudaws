@@ -15,9 +15,19 @@ Parameters:
   stack:
     Description: "name Stack"
     Type: String
-  bucket:
-    Description: "name bucket"
-    Type: String    
+  ShouldCreateBucket:
+    Description: "valor que indica si el bucket debe ser considerado para crealo"
+    Type: String
+    Default: true
+
+
+Globals:
+  Function:
+    Timeout: 5
+    MemorySize: 512
+
+Conditions:
+  ShouldCreateBucket: !Equals [ !Ref ShouldCreateBucket, "true" ]
   
 Resources:
   Function:
@@ -32,27 +42,6 @@ Resources:
       MemorySize: 128
       Timeout: 3
       Role: !GetAtt rRoleLambdaExecution.Arn
-  
-  #FunctionSam:
-  #  Type: AWS::Serverless::Function
-  #  Properties:
-  #    CodeUri: ./src
-  #    Handler: lambda_function.lambda_handler
-  #    Runtime: python3.7
-  #    FunctionName:
-  #      !Sub "${team}-${application}-${stack}-${environment}-lambda-Sam"
-  #    Description: "Lambda taller01"
-  #    MemorySize: 128
-  #    Timeout: 3
-  #    #Role: !GetAtt rRoleLambdaExecution.Arn        
-  
-  #FunctionLogGroup:
-  #  Type: "AWS::Logs::LogGroup"
-  #  Properties:
-  #    LogGroupName: !Join
-  #      - ""
-  #      - - /aws/lambda/
-  #        - !Sub "${team}-${application}-${stack}-${environment}-lambda"
 
   rRoleLambdaExecution:
     Type: "AWS::IAM::Role"
@@ -77,30 +66,41 @@ Resources:
                   - logs:CreateLogGroup
                   - logs:PutLogEvents
                 Resource: "*"
-                #!GetAtt FunctionLogGroup.Arn
-                  
-  Rule:
-    Type: "AWS::Events::Rule"
+              - Sid: S3Policy
+                Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource: 
+                  - !Sub "arn:aws:s3:::${team}-${application}-${stack}-${environment}-${AWS::Region}-${AWS::AccountId}-bucket"
+                  - !Sub "arn:aws:s3:::${team}-${application}-${stack}-${environment}-${AWS::Region}-${AWS::AccountId}-bucket/*"
+                
+  BucketData:
+    DependsOn: S3InvokeLambdaPermission
+    Type: AWS::S3::Bucket
+    #DeletionPolicy: Retain
+    #Condition: ShouldCreateBucket
     Properties:
-      Name: !Join [ '-', [!Ref team, !Ref stack, !Ref application,"cron","rule"]]
-      Description: Trigger Lambda every minute
-      State: ENABLED
-      ScheduleExpression: "cron(*/1 * * * ? *)"
-      Targets:
-        - Id: !Join [ '-', [ "ibk", !Ref team, !Ref stack, !Ref application,"cron","rule"]]
-          Arn: !GetAtt Function.Arn
-          Input: !Sub |
-            {                            
-              "env": "${environment}"
-            }
-  PermissionEventsInvokeLambda:
+      BucketName: !Sub "${team}-${application}-${stack}-${environment}-${AWS::Region}-${AWS::AccountId}-bucket"
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: 's3:ObjectCreated:*'
+            Function: !GetAtt Function.Arn
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: 'data/'
+                    
+  S3InvokeLambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:
+      Action: lambda:InvokeFunction
       FunctionName: !Ref Function
-      Action: "lambda:InvokeFunction"
-      Principal: "events.amazonaws.com"
-      SourceArn: !GetAtt Rule.Arn
-
+      Principal: s3.amazonaws.com
+      SourceArn: !Sub "arn:aws:s3:::${team}-${application}-${stack}-${environment}-${AWS::Region}-${AWS::AccountId}-bucket"
+      #!GetAtt BucketData.Arn
+    
 #Outputs:
 #DependsOn:
 #  lambda:

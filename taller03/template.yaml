@@ -27,37 +27,16 @@ Resources:
       Handler: lambda_function.lambda_handler
       Runtime: python3.7
       FunctionName:
-        !Sub "ibk-${team}-${application}-${stack}-${environment}-lambda"
+        !Sub "${team}-${application}-${stack}-${environment}-lambda"
       Description: "Lambda taller01"
       MemorySize: 128
       Timeout: 3
       Role: !GetAtt rRoleLambdaExecution.Arn
   
-  #FunctionSam:
-  #  Type: AWS::Serverless::Function
-  #  Properties:
-  #    CodeUri: ./src
-  #    Handler: lambda_function.lambda_handler
-  #    Runtime: python3.7
-  #    FunctionName:
-  #      !Sub "ibk-${team}-${application}-${stack}-${environment}-lambda-Sam"
-  #    Description: "Lambda taller01"
-  #    MemorySize: 128
-  #    Timeout: 3
-  #    #Role: !GetAtt rRoleLambdaExecution.Arn        
-  
-  #FunctionLogGroup:
-  #  Type: "AWS::Logs::LogGroup"
-  #  Properties:
-  #    LogGroupName: !Join
-  #      - ""
-  #      - - /aws/lambda/
-  #        - !Sub "ibk-${team}-${application}-${stack}-${environment}-lambda"
-
   rRoleLambdaExecution:
     Type: "AWS::IAM::Role"
     Properties:
-      RoleName: !Sub "ibk-${team}-${application}-${stack}-${environment}-execute-role"
+      RoleName: !Sub "${team}-${application}-${stack}-${environment}-execute-role"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -66,7 +45,7 @@ Resources:
               Service: lambda.amazonaws.com
             Action: "sts:AssumeRole"
       Policies:
-        - PolicyName: !Sub "ibk-${team}-${application}-${stack}-${environment}-policy"
+        - PolicyName: !Sub "${team}-${application}-${stack}-${environment}-policy"
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
