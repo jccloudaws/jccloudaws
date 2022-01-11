@@ -25,7 +25,7 @@ Resources:
   Function:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://rpa-cfn-artifacts-40888866-us-east-1/RPA-TALLER-LAMBDA-06/bc9785a69646cc6de6dd61221efb882a
+      CodeUri: s3://rpa-cfn-artifacts-40888866-us-east-1/RPA-TALLER-LAMBDA-06/25139e56d7809602fb9f60a4f0ff5931
       Handler: lambda_function.lambda_handler
       Runtime: python3.7
       FunctionName:

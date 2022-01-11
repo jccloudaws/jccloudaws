@@ -17,7 +17,7 @@ Parameters:
   ShouldCreateBucket:
     Description: valor que indica si el bucket debe ser considerado para crealo
     Type: String
-    Default: true
+    Default: false
 Globals:
   Function:
     Timeout: 5
@@ -77,7 +77,6 @@ Resources:
             - Fn::Sub: arn:aws:s3:::${team}-${application}-${stack}-${environment}-${AWS::Region}-${AWS::AccountId}-bucket
             - Fn::Sub: arn:aws:s3:::${team}-${application}-${stack}-${environment}-${AWS::Region}-${AWS::AccountId}-bucket/*
   BucketData:
-    DependsOn: S3InvokeLambdaPermission
     Type: AWS::S3::Bucket
     Condition: ShouldCreateBucket
     Properties:
@@ -95,6 +94,8 @@ Resources:
               Rules:
               - Name: prefix
                 Value: data/
+              - Name: suffix
+                Value: '*.jpeg'
   S3InvokeLambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:

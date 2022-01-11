@@ -27,7 +27,7 @@ Globals:
     MemorySize: 512
 
 Conditions:
-  ShouldCreateBucket: !Equals [ !Ref ShouldCreateBucket, "true" ]
+  ShouldCreateBucketxxx: !Equals [ !Ref ShouldCreateBucket, "true" ]
   
 Resources:
   Function:
@@ -74,12 +74,13 @@ Resources:
                 Resource: 
                   - !Sub "arn:aws:s3:::${team}-${application}-${stack}-${environment}-${AWS::Region}-${AWS::AccountId}-bucket"
                   - !Sub "arn:aws:s3:::${team}-${application}-${stack}-${environment}-${AWS::Region}-${AWS::AccountId}-bucket/*"
+                  
                 
   BucketData:
-    DependsOn: S3InvokeLambdaPermission
+    #DependsOn: S3InvokeLambdaPermission
     Type: AWS::S3::Bucket
     #DeletionPolicy: Retain
-    Condition: ShouldCreateBucket
+    Condition: ShouldCreateBucketxxx
     Properties:
       BucketName: !Sub "${team}-${application}-${stack}-${environment}-${AWS::Region}-${AWS::AccountId}-bucket"
       NotificationConfiguration:
@@ -91,6 +92,8 @@ Resources:
                 Rules:
                   - Name: prefix
                     Value: 'data/'
+                  - Name: suffix
+                    Value: '*.jpeg'
                     
   S3InvokeLambdaPermission:
     Type: AWS::Lambda::Permission
@@ -99,6 +102,7 @@ Resources:
       FunctionName: !Ref Function
       Principal: s3.amazonaws.com
       SourceArn: !Sub "arn:aws:s3:::${team}-${application}-${stack}-${environment}-${AWS::Region}-${AWS::AccountId}-bucket"
+      #!Sub "arn:aws:s3:::${team}-${application}-${stack}-${environment}-${AWS::Region}-${AWS::AccountId}-bucket"
       #!GetAtt BucketData.Arn
     
 #Outputs:
