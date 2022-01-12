@@ -22,14 +22,26 @@ Globals:
     Timeout: 5
     MemorySize: 512
 Resources:
-  Function:
+  ApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name:
+        Fn::Join:
+        - '-'
+        - - Ref: team
+          - Ref: application
+          - Ref: stack
+          - Ref: environment
+          - api
+      StageName: v1
+  FunctionLegal:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://rpa-cfn-artifacts-40888866-us-east-1/RPA-TALLER-LAMBDA-06/503ec91e1656428c3fc5a2dd75b82601
+      CodeUri: s3://rpa-cfn-artifacts-40888866-us-east-1/RPA-TALLER-LAMBDA-09/ca6e52cf67b37f3b44d11e1bb8f8a63b
       Handler: lambda_function.lambda_handler
       Runtime: python3.7
       FunctionName:
-        Fn::Sub: ${team}-${application}-${stack}-${environment}-lambda
+        Fn::Sub: ${team}-${application}-${stack}-${environment}-legal-lambda
       Description: Lambda taller01
       MemorySize: 128
       Timeout: 3
@@ -45,10 +57,53 @@ Resources:
             - - Ref: team
               - Ref: stack
               - Ref: application
-              - config
+              - legal-representatives
               - table
           credentialsEmblue:
             Ref: credentialsEmblue
+      Events:
+        legalRepresentatives:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /rpa/legal-representatives
+            Method: get
+  FunctionFinancial:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://rpa-cfn-artifacts-40888866-us-east-1/RPA-TALLER-LAMBDA-09/ce7dba4831fd4bdee3a47020988c2381
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.7
+      FunctionName:
+        Fn::Sub: ${team}-${application}-${stack}-${environment}-financial-lambda
+      Description: Lambda taller01
+      MemorySize: 128
+      Timeout: 3
+      Role:
+        Fn::GetAtt:
+        - rRoleLambdaExecution
+        - Arn
+      Environment:
+        Variables:
+          table:
+            Fn::Join:
+            - '-'
+            - - Ref: team
+              - Ref: stack
+              - Ref: application
+              - financial-details
+              - table
+          credentialsEmblue:
+            Ref: credentialsEmblue
+      Events:
+        financialDetails:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /rpa/financial-details
+            Method: post
   rRoleLambdaExecution:
     Type: AWS::IAM::Role
     Properties:
@@ -89,9 +144,10 @@ Resources:
             - dynamodb:Scan
             - dynamodb:Query
             - dynamodb:GetRecords
+            - dynamodb:PutItem
             Resource:
-              Fn::Sub: arn:aws:dynamodb:*:${AWS::AccountId}:table/rpa-*
-  TableConfig:
+            - Fn::Sub: arn:aws:dynamodb:*:${AWS::AccountId}:table/rpa-*
+  TableLegal:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName:
@@ -100,92 +156,34 @@ Resources:
         - - Ref: team
           - Ref: stack
           - Ref: application
-          - config
+          - legal-representatives
           - table
       AttributeDefinitions:
-      - AttributeName: marca
+      - AttributeName: ndoc
         AttributeType: S
       KeySchema:
-      - AttributeName: marca
+      - AttributeName: ndoc
         KeyType: HASH
       BillingMode: PAY_PER_REQUEST
-  RuleTrome:
-    Type: AWS::Events::Rule
+  TableFinancial:
+    Type: AWS::DynamoDB::Table
     Properties:
-      Name:
+      TableName:
         Fn::Join:
         - '-'
         - - Ref: team
           - Ref: stack
           - Ref: application
-          - cron
-          - rule-trome
-      Description: Trigger Lambda every 20 hrs
-      State: ENABLED
-      ScheduleExpression: cron(* 20 * * ? *)
-      Targets:
-      - Id:
-          Fn::Join:
-          - '-'
-          - - Ref: team
-            - Ref: stack
-            - Ref: application
-            - cron
-            - rule
-        Arn:
-          Fn::GetAtt:
-          - Function
-          - Arn
-        Input:
-          Fn::Sub: "{                            \n  \"marca\": \"trome\"\n}\n"
-  Rulep21:
-    Type: AWS::Events::Rule
-    Properties:
-      Name:
-        Fn::Join:
-        - '-'
-        - - Ref: team
-          - Ref: stack
-          - Ref: application
-          - cron
-          - rule-p21
-      Description: Trigger Lambda every 20 hrs
-      State: ENABLED
-      ScheduleExpression: cron(*/30 19 * * ? *)
-      Targets:
-      - Id:
-          Fn::Join:
-          - '-'
-          - - Ref: team
-            - Ref: stack
-            - Ref: application
-            - cron
-            - rule
-        Arn:
-          Fn::GetAtt:
-          - Function
-          - Arn
-        Input:
-          Fn::Sub: "{                            \n  \"marca\": \"peru21\"\n}\n"
-  PermissionEventsTromeInvokeLambda:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName:
-        Ref: Function
-      Action: lambda:InvokeFunction
-      Principal: events.amazonaws.com
-      SourceArn:
-        Fn::GetAtt:
-        - RuleTrome
-        - Arn
-  PermissionEventsP21InvokeLambda:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName:
-        Ref: Function
-      Action: lambda:InvokeFunction
-      Principal: events.amazonaws.com
-      SourceArn:
-        Fn::GetAtt:
-        - Rulep21
-        - Arn
+          - financial-details
+          - table
+      AttributeDefinitions:
+      - AttributeName: ndoc
+        AttributeType: S
+      - AttributeName: tdoc
+        AttributeType: S
+      KeySchema:
+      - AttributeName: ndoc
+        KeyType: HASH
+      - AttributeName: tdoc
+        KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST

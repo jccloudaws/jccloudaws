@@ -1,0 +1,152 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Stack taller lambda 06
+
+Parameters:
+  team:
+    Description: "name team"
+    Type: String
+  environment:
+    Description: "name envoriment"
+    Type: String
+  application:
+    Description: "name Application"
+    Type: String
+  stack:
+    Description: "name Stack"
+    Type: String
+    
+  credentialsEmblue:
+    Description: "name table config dynamodb"
+    Type: String
+  
+Globals:
+  Function:
+    Timeout: 5
+    MemorySize: 512
+
+Resources:
+
+  ApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Join ['-', [!Ref team, !Ref application, !Ref stack, !Ref environment,"api"]]
+      StageName: v1
+          
+  FunctionLegal:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src/lambda-legal
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.7
+      FunctionName:
+        !Sub "${team}-${application}-${stack}-${environment}-legal-lambda"
+      Description: "Lambda taller01"
+      MemorySize: 128
+      Timeout: 3
+      Role: !GetAtt rRoleLambdaExecution.Arn
+      Environment:
+        Variables:
+          table: !Join ['-', [!Ref team ,!Ref stack, !Ref application,"legal-representatives","table"]]
+          credentialsEmblue: !Ref credentialsEmblue
+      Events: 
+        legalRepresentatives:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /rpa/legal-representatives
+            Method: get
+        
+            
+  FunctionFinancial:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src/lambda-financial
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.7
+      FunctionName:
+        !Sub "${team}-${application}-${stack}-${environment}-financial-lambda"
+      Description: "Lambda taller01"
+      MemorySize: 128
+      Timeout: 3
+      Role: !GetAtt rRoleLambdaExecution.Arn
+      Environment:
+        Variables:
+          table: !Join ['-', [!Ref team ,!Ref stack, !Ref application,"financial-details","table"]]
+          credentialsEmblue: !Ref credentialsEmblue
+      Events: 
+        financialDetails:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /rpa/financial-details
+            Method: post
+          
+  rRoleLambdaExecution:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub "${team}-${application}-${stack}-${environment}-execute-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: !Sub "${team}-${application}-${stack}-${environment}-policy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: LogGroupPolicy
+                Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:CreateLogGroup
+                  - logs:PutLogEvents
+                Resource: "*"
+              - Sid: secretmanagerPolicy
+                Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !Sub "arn:aws:secretsmanager:*:${AWS::AccountId}:secret:/RPA/*"
+              - Sid: DynPolicy
+                Effect: Allow
+                Action:
+                  - "dynamodb:DescribeTable"
+                  - "dynamodb:GetItem"           
+                  - "dynamodb:BatchGetItem"
+                  - "dynamodb:Scan"
+                  - "dynamodb:Query"
+                  - "dynamodb:GetRecords"
+                  - "dynamodb:PutItem"
+                Resource: 
+                  - !Sub "arn:aws:dynamodb:*:${AWS::AccountId}:table/rpa-*"
+                  
+  TableLegal:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Join ['-', [!Ref team ,!Ref stack, !Ref application,"legal-representatives","table"]]
+      AttributeDefinitions:
+        - AttributeName: "ndoc"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "ndoc"
+          KeyType: "HASH"
+      BillingMode: PAY_PER_REQUEST
+      
+  TableFinancial:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Join ['-', [!Ref team ,!Ref stack, !Ref application,"financial-details","table"]]
+      AttributeDefinitions:
+        - AttributeName: "ndoc"
+          AttributeType: "S"
+        - AttributeName: "tdoc"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "ndoc"
+          KeyType: "HASH"
+        - AttributeName: "tdoc"
+          KeyType: "RANGE"
+      BillingMode: PAY_PER_REQUEST
