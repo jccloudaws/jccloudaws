@@ -18,3 +18,9 @@ You can click the Preview link to take a look at your changes.
 - ./deploy.sh dev
 - pip install -r src/requirements.txt
 - python src/lambda_function.py
+- 
+
+set AWS_CLI_FILE_ENCODING=UTF-8
+
+aws dynamodb batch-write-item --request-items file://table-legales.json
+aws dynamodb batch-write-item --request-items file://UAT-RTD-DenegacionSobregiro-Template.json
