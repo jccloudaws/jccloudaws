@@ -11,6 +11,7 @@
 # KDE directory preferences
 .directory
 
+
 # Linux trash folder which might appear on any partition or disk
 .Trash-*
 
@@ -166,6 +167,7 @@ __pycache__/
 build/
 develop-eggs/
 dist/
+layer/
 downloads/
 eggs/
 .eggs/
