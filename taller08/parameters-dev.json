@@ -13,7 +13,11 @@
     },
     {
         "ParameterKey": "application",
-        "ParameterValue": "taller06"
+        "ParameterValue": "taller08"
+    },
+    {
+        "ParameterKey": "layerpip",
+        "ParameterValue": "/RPA/Lambda/Layer-pip/Version"
     },
     {
         "ParameterKey": "credentialsEmblue",

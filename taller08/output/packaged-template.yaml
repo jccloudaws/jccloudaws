@@ -1,6 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Transform: AWS::Serverless-2016-10-31
-Description: Stack taller lambda 06
+Description: Stack INTERCORP
 Parameters:
   team:
     Description: name team
@@ -15,177 +14,44 @@ Parameters:
     Description: name Stack
     Type: String
   credentialsEmblue:
-    Description: name table config dynamodb
+    Description: name Stack
     Type: String
-Globals:
-  Function:
-    Timeout: 5
-    MemorySize: 512
+  layerpip:
+    Description: ssm parameters layer lambda
+    Type: AWS::SSM::Parameter::Value<String>
 Resources:
-  Function:
-    Type: AWS::Serverless::Function
+  layers:
+    Type: AWS::CloudFormation::Stack
     Properties:
-      CodeUri: s3://rpa-cfn-artifacts-40888866-us-east-1/RPA-TALLER-LAMBDA-06/bc9785a69646cc6de6dd61221efb882a
-      Handler: lambda_function.lambda_handler
-      Runtime: python3.7
-      FunctionName:
-        Fn::Sub: ${team}-${application}-${stack}-${environment}-lambda
-      Description: Lambda taller01
-      MemorySize: 128
-      Timeout: 3
-      Role:
-        Fn::GetAtt:
-        - rRoleLambdaExecution
-        - Arn
-      Environment:
-        Variables:
-          table:
-            Fn::Join:
-            - '-'
-            - - Ref: team
-              - Ref: stack
-              - Ref: application
-              - config
-              - table
-          credentialsEmblue:
-            Ref: credentialsEmblue
-  rRoleLambdaExecution:
-    Type: AWS::IAM::Role
+      TemplateURL: https://s3.us-east-1.amazonaws.com/rpa-cfn-artifacts-40888866-us-east-1/RPA-TALLER-LAMBDA-08/d8bc13e10541649cf59be43da916f806.template
+      Parameters:
+        team:
+          Ref: team
+        environment:
+          Ref: environment
+        application:
+          Ref: application
+        stack:
+          Ref: stack
+  lambda:
+    DependsOn: layers
+    Type: AWS::CloudFormation::Stack
     Properties:
-      RoleName:
-        Fn::Sub: ${team}-${application}-${stack}-${environment}-execute-role
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service: lambda.amazonaws.com
-          Action: sts:AssumeRole
-      Policies:
-      - PolicyName:
-          Fn::Sub: ${team}-${application}-${stack}-${environment}-policy
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Sid: LogGroupPolicy
-            Effect: Allow
-            Action:
-            - logs:CreateLogStream
-            - logs:CreateLogGroup
-            - logs:PutLogEvents
-            Resource: '*'
-          - Sid: secretmanagerPolicy
-            Effect: Allow
-            Action:
-            - secretsmanager:GetSecretValue
-            Resource:
-              Fn::Sub: arn:aws:secretsmanager:*:${AWS::AccountId}:secret:/RPA/*
-          - Sid: DynPolicy
-            Effect: Allow
-            Action:
-            - dynamodb:DescribeTable
-            - dynamodb:GetItem
-            - dynamodb:BatchGetItem
-            - dynamodb:Scan
-            - dynamodb:Query
-            - dynamodb:GetRecords
-            Resource:
-              Fn::Sub: arn:aws:dynamodb:*:${AWS::AccountId}:table/rpa-*
-  TableConfig:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName:
-        Fn::Join:
-        - '-'
-        - - Ref: team
-          - Ref: stack
-          - Ref: application
-          - config
-          - table
-      AttributeDefinitions:
-      - AttributeName: marca
-        AttributeType: S
-      KeySchema:
-      - AttributeName: marca
-        KeyType: HASH
-      BillingMode: PAY_PER_REQUEST
-  RuleTrome:
-    Type: AWS::Events::Rule
-    Properties:
-      Name:
-        Fn::Join:
-        - '-'
-        - - Ref: team
-          - Ref: stack
-          - Ref: application
-          - cron
-          - rule-trome
-      Description: Trigger Lambda every 20 hrs
-      State: ENABLED
-      ScheduleExpression: cron(* 20 * * ? *)
-      Targets:
-      - Id:
-          Fn::Join:
-          - '-'
-          - - Ref: team
-            - Ref: stack
-            - Ref: application
-            - cron
-            - rule
-        Arn:
+      TemplateURL: https://s3.us-east-1.amazonaws.com/rpa-cfn-artifacts-40888866-us-east-1/RPA-TALLER-LAMBDA-08/3cf225a0cc098edddb8debc0994ce535.template
+      Parameters:
+        team:
+          Ref: team
+        environment:
+          Ref: environment
+        application:
+          Ref: application
+        stack:
+          Ref: stack
+        layerCommon:
           Fn::GetAtt:
-          - Function
-          - Arn
-        Input:
-          Fn::Sub: "{                            \n  \"marca\": \"trome\"\n}\n"
-  Rulep21:
-    Type: AWS::Events::Rule
-    Properties:
-      Name:
-        Fn::Join:
-        - '-'
-        - - Ref: team
-          - Ref: stack
-          - Ref: application
-          - cron
-          - rule-p21
-      Description: Trigger Lambda every 20 hrs
-      State: ENABLED
-      ScheduleExpression: cron(*/30 19 * * ? *)
-      Targets:
-      - Id:
-          Fn::Join:
-          - '-'
-          - - Ref: team
-            - Ref: stack
-            - Ref: application
-            - cron
-            - rule
-        Arn:
-          Fn::GetAtt:
-          - Function
-          - Arn
-        Input:
-          Fn::Sub: "{                            \n  \"marca\": \"peru21\"\n}\n"
-  PermissionEventsTromeInvokeLambda:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName:
-        Ref: Function
-      Action: lambda:InvokeFunction
-      Principal: events.amazonaws.com
-      SourceArn:
-        Fn::GetAtt:
-        - RuleTrome
-        - Arn
-  PermissionEventsP21InvokeLambda:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName:
-        Ref: Function
-      Action: lambda:InvokeFunction
-      Principal: events.amazonaws.com
-      SourceArn:
-        Fn::GetAtt:
-        - Rulep21
-        - Arn
+          - layers
+          - Outputs.oLayerCommom
+        credentialsEmblue:
+          Ref: credentialsEmblue
+        layerpip:
+          Ref: layerpip

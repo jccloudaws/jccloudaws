@@ -1,5 +1,5 @@
 {
-	"RTD-Template": [
+	"rpa-lambda-taller09-legal-representatives-table": [
 		{
 			"PutRequest": {
 				"Item": {
@@ -12,7 +12,7 @@
 						  },
 						  "name": {
 							"S": "juan carlos"
-						  }
+						  },
 					}
 				}
 			}

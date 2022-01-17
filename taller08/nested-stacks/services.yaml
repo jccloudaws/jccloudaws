@@ -1,0 +1,106 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Stack taller lambda 07
+
+Parameters:
+  team:
+    Description: "name team"
+    Type: String
+  environment:
+    Description: "name envoriment"
+    Type: String
+  application:
+    Description: "name Application"
+    Type: String
+  stack:
+    Description: "name Stack"
+    Type: String
+  credentialsEmblue:
+    Description: "name credentialsEmblue"
+    Type: String
+  layerCommon:
+    Description: "name layer"
+    Type: String
+  layerpip:
+    Description: "name layer"
+    Type: String
+  
+Globals:
+  Function:
+    Timeout: 5
+    MemorySize: 512
+
+Resources:
+  ApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Join ['-', [!Ref team, !Ref application, !Ref stack, !Ref environment,"api"]]
+      StageName: v1
+      
+  ApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Join ['-', [!Ref team,!Ref stack,!Ref application , !Ref environment,"api"]]
+      StageName: v1
+      Cors:
+        AllowMethods: "'POST, GET'"
+        AllowHeaders: "'X-Forwarded-For'"
+        AllowOrigin: "'*'"
+        MaxAge: "'600'"
+        AllowCredentials: False
+        
+  Function:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../src
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.7
+      FunctionName:
+        !Sub "${team}-${application}-${stack}-${environment}-lambda"
+      Description: "Lambda taller01"
+      MemorySize: 128
+      Timeout: 3
+      Role: !GetAtt rRoleLambdaExecution.Arn
+      Environment:
+        Variables:
+          table: !Join ['-', [!Ref team ,!Ref stack, !Ref application,"legal-representatives","table"]]
+          credentialsEmblue: !Ref credentialsEmblue
+      Layers:
+        - !Ref layerCommon
+        - !Ref layerpip
+      Events: 
+        legalRepresentatives:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /rpa/legal-representatives
+            Method: get
+            
+  rRoleLambdaExecution:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub "${team}-${application}-${stack}-${environment}-execute-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: !Sub "${team}-${application}-${stack}-${environment}-policy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: LogGroupPolicy
+                Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:CreateLogGroup
+                  - logs:PutLogEvents
+                Resource: "*"
+              - Sid: secretmanagerPolicy
+                Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !Sub "arn:aws:secretsmanager:*:${AWS::AccountId}:secret:/RPA/*"
