@@ -4,6 +4,7 @@ import boto3
 from boto3.dynamodb.conditions import Key, Attr
 import urllib.parse
 import os
+from common.secretmanager import SecretManager
 
 #secret_client = boto3.client('secretsmanager')
 dynamodb_resource = boto3.resource('dynamodb')
@@ -11,10 +12,25 @@ dynamodb_resource = boto3.resource('dynamodb')
 def lambda_handler(event, context):
     
     tableLegal= os.getenv("table")
+    secretId= os.getenv("credentialsEmblue")
+    apikey = os.getenv("apikey")
+    
+    response=SecretManager().get_secret()
+    print("secreto",response)
     
     if event['httpMethod']!= 'GET':
         return {"statusCode": 200,"headers": {"Content-Type": "application/json"},
                     "body": json.dumps({'status': False, 'code_status': 400, 'menssage': "http Method not support", 'data': {}})}
+    
+    if event.get('headers').get('x-api-key',None) is  None:
+        return {"statusCode": 200,"headers": {"Content-Type": "application/json"},
+                "body": json.dumps({'status': False, 'code_status': 400, 'menssage': "headers x-api-key is requerid", 'data': {}}) }
+        
+    if event.get('headers').get('x-api-key')!= apikey:
+        return {"statusCode": 200,"headers": {"Content-Type": "application/json"},
+                "body": json.dumps({'status': False, 'code_status': 400, 'menssage': "headers x-api-key It is incorrect", 'data': {}}) }
+    
+    
             
     if event['path'] in ['/rpa/legal-representatives']:
             try:

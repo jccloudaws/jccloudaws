@@ -21,7 +21,12 @@ Parameters:
   layerpip:
     Description: "ssm parameters layer lambda"
     Type: "AWS::SSM::Parameter::Value<String>"
-  
+  apikey:
+    Description: "ssm parameters layer lambda"
+    Type: "AWS::SSM::Parameter::Value<String>"
+  tableRepresentatives:
+    Type: String
+    
 Resources:
   layers:
     Type: AWS::CloudFormation::Stack
@@ -32,7 +37,7 @@ Resources:
         environment: !Ref environment
         application: !Ref application
         stack: !Ref stack        
-  lambda:
+  api:
     DependsOn: layers
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -45,4 +50,6 @@ Resources:
         layerCommon: !GetAtt ["layers", "Outputs.oLayerCommom"]
         credentialsEmblue: !Ref credentialsEmblue
         layerpip: !Ref layerpip
+        apikey: !Ref apikey
+        tableRepresentatives: !Ref tableRepresentatives
   

@@ -19,11 +19,16 @@ Parameters:
   layerpip:
     Description: ssm parameters layer lambda
     Type: AWS::SSM::Parameter::Value<String>
+  apikey:
+    Description: ssm parameters layer lambda
+    Type: AWS::SSM::Parameter::Value<String>
+  tableRepresentatives:
+    Type: String
 Resources:
   layers:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://s3.us-east-1.amazonaws.com/rpa-cfn-artifacts-40888866-us-east-1/RPA-TALLER-LAMBDA-08/d8bc13e10541649cf59be43da916f806.template
+      TemplateURL: https://s3.us-east-1.amazonaws.com/rpa-cfn-artifacts-40888866-us-east-1/RPA-TALLER-LAMBDA-08/0e9f543a00b2a6a9738181213fbe4d67.template
       Parameters:
         team:
           Ref: team
@@ -33,11 +38,11 @@ Resources:
           Ref: application
         stack:
           Ref: stack
-  lambda:
+  api:
     DependsOn: layers
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://s3.us-east-1.amazonaws.com/rpa-cfn-artifacts-40888866-us-east-1/RPA-TALLER-LAMBDA-08/583dddbec902fec5628bb44a555dfaaf.template
+      TemplateURL: https://s3.us-east-1.amazonaws.com/rpa-cfn-artifacts-40888866-us-east-1/RPA-TALLER-LAMBDA-08/e4da2ea14d263e0179245a58e867ec30.template
       Parameters:
         team:
           Ref: team
@@ -55,3 +60,7 @@ Resources:
           Ref: credentialsEmblue
         layerpip:
           Ref: layerpip
+        apikey:
+          Ref: apikey
+        tableRepresentatives:
+          Ref: tableRepresentatives

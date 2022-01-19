@@ -24,6 +24,11 @@ Parameters:
   layerpip:
     Description: "name layer"
     Type: String
+  apikey:
+    Type: String
+  tableRepresentatives:
+    Type: String
+  
   
 Globals:
   Function:
@@ -63,8 +68,9 @@ Resources:
       Role: !GetAtt rRoleLambdaExecution.Arn
       Environment:
         Variables:
-          table: !Join ['-', [!Ref team ,!Ref stack, !Ref application,"legal-representatives","table"]]
+          table: !Ref tableRepresentatives
           credentialsEmblue: !Ref credentialsEmblue
+          apikey: !Ref apikey
       Layers:
         - !Ref layerCommon
         - !Ref layerpip
@@ -104,3 +110,14 @@ Resources:
                 Action:
                   - secretsmanager:GetSecretValue
                 Resource: !Sub "arn:aws:secretsmanager:*:${AWS::AccountId}:secret:/RPA/*"
+              - Sid: DynPolicy
+                Effect: Allow
+                Action:
+                  - "dynamodb:DescribeTable"
+                  - "dynamodb:GetItem"           
+                  - "dynamodb:BatchGetItem"
+                  - "dynamodb:Scan"
+                  - "dynamodb:Query"
+                  - "dynamodb:GetRecords"
+                Resource: 
+                  - !Sub "arn:aws:dynamodb:*:${AWS::AccountId}:table/rpa-*"

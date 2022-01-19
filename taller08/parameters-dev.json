@@ -22,5 +22,13 @@
     {
         "ParameterKey": "credentialsEmblue",
         "ParameterValue": "/RPA/NEWSLETTER/EMBLUE"
+    },
+    {
+        "ParameterKey": "apikey",
+        "ParameterValue": "/RPA/SERVICE/APIKEY"
+    },
+    {
+        "ParameterKey": "tableRepresentatives",
+        "ParameterValue": "rpa-lambda-taller09-legal-representatives-table"
     }
 ]
