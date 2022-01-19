@@ -14,7 +14,7 @@ class SecretManager(object):
             secret_response = self.secret_client.get_secret_value(SecretId=secretId)
             secret = json.loads(secret_response.get('SecretString'))
             data={
-                "credentials":secret['credentials']
+                "access_token":secret['access_token']
             }
             #response = base64.b64decode(secret['credentials'])
         except Exception as e:
