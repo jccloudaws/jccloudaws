@@ -16,10 +16,6 @@ Parameters:
     Description: "name Stack"
     Type: String
     
-  credentialsEmblue:
-    Description: "name table config dynamodb"
-    Type: String
-  
 Globals:
   Function:
     Timeout: 5
@@ -48,7 +44,7 @@ Resources:
       Environment:
         Variables:
           table: !Join ['-', [!Ref team ,!Ref stack, !Ref application,"legal-representatives","table"]]
-          credentialsEmblue: !Ref credentialsEmblue
+          
       Events: 
         legalRepresentatives:
           Type: Api
@@ -69,7 +65,7 @@ Resources:
       Description: "Lambda taller01"
       MemorySize: 128
       Timeout: 3
-      Role: !GetAtt rRoleLambdaExecution.Arn
+      Role: !GetAtt rRoleLambdaExecutionFinanciera.Arn
       Environment:
         Variables:
           table: !Join ['-', [!Ref team ,!Ref stack, !Ref application,"financial-details","table"]]
@@ -82,7 +78,7 @@ Resources:
             Path: /rpa/financial-details
             Method: post
           
-  rRoleLambdaExecution:
+  rRoleLambdaExecutionRepresentantes:
     Type: "AWS::IAM::Role"
     Properties:
       RoleName: !Sub "${team}-${application}-${stack}-${environment}-execute-role"
@@ -119,9 +115,44 @@ Resources:
                   - "dynamodb:Scan"
                   - "dynamodb:Query"
                   - "dynamodb:GetRecords"
-                  - "dynamodb:PutItem"
                 Resource: 
                   - !Sub "arn:aws:dynamodb:*:${AWS::AccountId}:table/rpa-*"
+                  
+  rRoleLambdaExecutionFinanciera:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub "${team}-${application}-${stack}-${environment}-execute-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: !Sub "${team}-${application}-${stack}-${environment}-policy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: LogGroupPolicy
+                Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:CreateLogGroup
+                  - logs:PutLogEvents
+                Resource: "*"
+              - Sid: secretmanagerPolicy
+                Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !Sub "arn:aws:secretsmanager:*:${AWS::AccountId}:secret:/RPA/*"
+              - Sid: DynPolicy
+                Effect: Allow
+                Action:
+                  - "dynamodb:DescribeTable"
+                  - "dynamodb:PutItem"
+                Resource: 
+                  - !Sub "arn:aws:dynamodb:*:${AWS::AccountId}:table/rpa-*"                  
                   
   TableLegal:
     Type: AWS::DynamoDB::Table
@@ -140,9 +171,9 @@ Resources:
     Properties:
       TableName: !Join ['-', [!Ref team ,!Ref stack, !Ref application,"financial-details","table"]]
       AttributeDefinitions:
-        - AttributeName: "ndoc"
+        - AttributeName: "brand"
           AttributeType: "S"
-        - AttributeName: "tdoc"
+        - AttributeName: "timestamp"
           AttributeType: "S"
       KeySchema:
         - AttributeName: "ndoc"

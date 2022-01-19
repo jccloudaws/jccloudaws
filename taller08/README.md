@@ -18,3 +18,5 @@ You can click the Preview link to take a look at your changes.
 - ./deploy.sh dev
 - pip install -r src/requirements.txt
 - python src/lambda_function.py
+- 
+./layer-ci/build.sh
