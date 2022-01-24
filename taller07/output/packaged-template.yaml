@@ -20,7 +20,7 @@ Resources:
   layers:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://s3.us-east-1.amazonaws.com/rpa-cfn-artifacts-40888866-us-east-1/RPA-TALLER-LAMBDA-07/e9dfad4876f6993d17870a1196bdcc1a.template
+      TemplateURL: https://s3.us-east-1.amazonaws.com/rpa-cfn-artifacts-40888866-us-east-1/RPA-TALLER-LAMBDA-07/d37fc437ca9da4bec3c82161561c99ab.template
       Parameters:
         team:
           Ref: team

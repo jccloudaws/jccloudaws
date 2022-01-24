@@ -8,13 +8,13 @@ class SecretManager(object):
         self.secret_client= boto3.client('secretsmanager')
         
     def get_secret(self):
-        
+        print("hello wo..")
         try:
             secretId = os.getenv("credentialsEmblue")
             secret_response = self.secret_client.get_secret_value(SecretId=secretId)
             secret = json.loads(secret_response.get('SecretString'))
             data={
-                "access_token":secret['access_token']
+                "credentials":secret['access_token']
             }
             #response = base64.b64decode(secret['credentials'])
         except Exception as e:
