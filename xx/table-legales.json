@@ -1,0 +1,21 @@
+{
+	"rpa-lambda-taller09-legal-representatives-table": [
+		{
+			"PutRequest": {
+				"Item": {
+					{
+					 "ndoc": {
+							"S": "40888869"
+						  },
+						  "tdoc": {
+							"S": "dni"
+						  },
+						  "name": {
+							"S": "juan carlos"
+						  },
+					}
+				}
+			}
+				}
+	]
+}
