@@ -56,7 +56,7 @@ Resources:
   rRoleLambdaExecutionRepresentantes:
     Type: "AWS::IAM::Role"
     Properties:
-      RoleName: !Sub "${team}-${application}-${stack}-${environment}-execute-role"
+      RoleName: !Sub "${team}-${application}-${stack}-${environment}-representate-execute-role"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -96,7 +96,7 @@ Resources:
   rRoleLambdaExecutionFinanciera:
     Type: "AWS::IAM::Role"
     Properties:
-      RoleName: !Sub "${team}-${application}-${stack}-${environment}-execute-role"
+      RoleName: !Sub "${team}-${application}-${stack}-${environment}-financial-execute-role"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:

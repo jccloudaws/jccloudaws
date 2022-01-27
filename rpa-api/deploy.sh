@@ -5,10 +5,10 @@ S3_BUCKET="rpa-cfn-artifacts-40888866-us-east-1"
 
 aws s3 mb s3://rpa-cfn-artifacts-40888866-us-east-1
 
-STACK_NAME="rpa-capacitacion-cloud-aws-taller-lambda-12"
+STACK_NAME="rpa-capacitacion-cloud-aws-taller-rpa-api"
 REGION="us-east-1"
 DIRNAME=$(dirname "$0")
-PREFIX=RPA-TALLER-LAMBDA-12
+PREFIX=RPA-TALLER-LAMBDA
 #pip install -r requirements.txt -t ./src
 #pip  install -q -r requirements.txt  -t src/python
 
