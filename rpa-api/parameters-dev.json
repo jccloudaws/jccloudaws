@@ -13,10 +13,6 @@
     },
     {
         "ParameterKey": "application",
-        "ParameterValue": "taller12"
-    },
-    {
-        "ParameterKey": "credentialsEmblue",
-        "ParameterValue": "/RPA/NEWSLETTER/EMBLUE"
+        "ParameterValue": "api-details"
     }
 ]

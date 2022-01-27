@@ -2,8 +2,6 @@ import json
 import os
 import boto3
 
-
-#secret_client = boto3.client('secretsmanager')
 dynamodb_resource = boto3.resource('dynamodb')
 def lambda_handler(event, context):
     table_financial= os.getenv("table")
@@ -25,9 +23,9 @@ def lambda_handler(event, context):
                     'code_status': 200,
                     'menssage': "Registro creado correctamente - financial-details",
                     'data': row})}
-        except Exception as error:
-            print(error)
+        except Exception as e:
+            print(e)
             return {"statusCode": 200,"headers": {"Content-Type": "application/json"},
                     "body": json.dumps({'status': False,
                     'code_status': 400, 'menssage': "financial-details",
-                    'data': error.__str__()})}
+                    'data': e.__str__()})}

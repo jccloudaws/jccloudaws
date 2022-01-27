@@ -44,7 +44,7 @@ Resources:
       Environment:
         Variables:
           table: !Join ['-', [!Ref team ,!Ref stack, !Ref application,"financial-details","table"]]
-          credentialsEmblue: !Ref credentialsEmblue
+          #credentialsEmblue: !Ref credentialsEmblue
       Events: 
         financialDetails:
           Type: Api
@@ -146,9 +146,9 @@ Resources:
     Properties:
       TableName: !Join ['-', [!Ref team ,!Ref stack, !Ref application,"financial-details","table"]]
       AttributeDefinitions:
-        - AttributeName: "brand"
+        - AttributeName: "ndoc"
           AttributeType: "S"
-        - AttributeName: "timestamp"
+        - AttributeName: "tdoc"
           AttributeType: "S"
       KeySchema:
         - AttributeName: "ndoc"
