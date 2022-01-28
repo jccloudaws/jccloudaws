@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Stack CICD 
+
+Parameters:
+
+  team:
+    Type: String
+  stack:
+    Type: String
+  enviroment:
+    Type: String  
+  application:
+    Type: String    
+  repositoryName:
+    Type: String      
+  branchName:
+    Type: String      
+  pylintScore:
+    Type: String  
+  KMSInfraKeyId:
+    Type: String    
+  artifactoryStore:
+    Type: String
+  
+Resources:
+  iamstack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./nested-stacks/cicd-iam.yaml
+      Parameters:        
+        team: !Ref team        
+        application: !Ref application
+        enviroment: !Ref enviroment
+        stack: !Ref stack                
+        KMSInfraKeyId: !Ref KMSInfraKeyId
+  Pipelinestack:
+    DependsOn: ["iamstack"]
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./nested-stacks/cicd-pipeline.yaml
+      Parameters:        
+        team: !Ref team
+        repositoryName: !Ref repositoryName
+        branchName: !Ref branchName
+        application: !Ref application
+        enviroment: !Ref enviroment
+        stack: !Ref stack        
+        artifactoryStore: !Ref artifactoryStore
+        pylintScore: !Ref pylintScore        
+        codebuildrole: !GetAtt [ "iamstack", "Outputs.oCodeBuildRole" ]
+        codepipelineRole: !GetAtt [ "iamstack", "Outputs.orCodePipelineRole" ]

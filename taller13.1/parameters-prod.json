@@ -1,0 +1,46 @@
+[
+    {
+        "ParameterKey": "sdlfstack",
+        "ParameterValue": "ifrs"
+    },
+    {
+        "ParameterKey": "sdlfenviroment",
+        "ParameterValue": "prod"
+    },
+    {
+        "ParameterKey": "sdlfapplication",
+        "ParameterValue": "sdlf"
+    },    
+    {
+        "ParameterKey": "sdlfBranchName",
+        "ParameterValue": "master"
+    },
+    {
+        "ParameterKey": "sdlfRepositoryName",
+        "ParameterValue": "ibk-bigdata-sdlf-ifrs-api"
+    },    
+    {
+        "ParameterKey":"sdlfArtifactoryStore",
+        "ParameterValue":"sdlf-artifactorystore-us-east-1-195034049652-bucket"
+    },
+    {
+        "ParameterKey":"sdlfCFS3Store",
+        "ParameterValue":"sdlf-cfn-artifacts-pipeline-us-east-1-195034049652-bucket"
+    },
+    {
+        "ParameterKey": "sdlfPylintScore",
+        "ParameterValue": "-100.0"
+    },
+    {
+        "ParameterKey": "sdlfcodecommitRole",
+        "ParameterValue": "sdlf-cicd-deploy-ifrs-codecommit-prod-role"
+    },
+    {
+        "ParameterKey": "sdlfKMSInfraKeyId",
+        "ParameterValue": "arn:aws:kms:us-east-1:195034049652:key/c91c5dea-99e3-44ec-abbe-01a3fa582714"
+    },
+    {
+        "ParameterKey": "sdlfSharedDevOpsAccountId",
+        "ParameterValue": "611415883004"
+    }
+]

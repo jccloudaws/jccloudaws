@@ -1,0 +1,42 @@
+[    
+  {
+    "Key": "c_importancia",
+    "Value": "Importante"
+  },
+  {
+    "Key": "c_vp",
+    "Value": "VP.NEGOCIOS retail"
+  },
+  {
+    "Key": "c_responsablePO",
+    "Value": "Chumioque Pachas Antonio Gustavo"
+  },
+  {
+    "Key": "c_crew",
+    "Value": "Data Analytics"
+  },
+  {
+    "Key": "c_responsableTL",
+    "Value": "Juan Quevedo"
+  },
+  {
+    "Key": "c_costo",
+    "Value": "8770000000"
+  },
+  {
+    "Key": "c_proyecto",
+    "Value": "SDLF"
+  },
+  {
+  "Key": "c_suscripcion",
+  "Value": "pe interbank ml staging"
+  },
+  {
+    "Key": "c_ambiente",
+    "Value": "staging"
+  },
+  {
+    "Key": "c_aplicacion",
+    "Value": "ifrs"
+  }
+]

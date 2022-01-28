@@ -1,0 +1,14 @@
+[    
+    {
+        "ParameterKey": "stack",
+        "ParameterValue": "cicd"
+    },
+    {
+        "ParameterKey": "team",
+        "ParameterValue": "da"
+    },
+    {
+        "ParameterKey": "application",
+        "ParameterValue": "intercorp"
+    }
+]

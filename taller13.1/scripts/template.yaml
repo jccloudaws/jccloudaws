@@ -1,0 +1,141 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: cross-account role
+
+Parameters:
+  childAccountId:
+    Description: Child AWS account ID
+    Type: String
+    AllowedPattern: (\d{12}|^$)
+    ConstraintDescription: Must be an AWS account ID
+  enviroment:
+    Description: enviroment name
+    Type: String
+    AllowedValues: [dev, test, prod]
+    Default: dev
+  team:
+    Description: Team name
+    Type: String  
+  application:
+    Description: application name
+    Type: String  
+  stack:
+    Description: stack name
+    Type: String  
+Resources:
+  rCodeCommitTriggerRuleBus:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub ibk-${team}-${stack}-${application}-rule-bus-codecommit-${enviroment}      
+      EventPattern:
+        source:
+          - aws.codecommit
+        detail-type:
+          - CodeCommit Repository State Change
+        resources:
+          - !Sub "arn:aws:codecommit:${AWS::Region}:${AWS::AccountId}:ibk-bigdata-intercorp-cicd"
+          - !Sub "arn:aws:codecommit:${AWS::Region}:${AWS::AccountId}:ibk-bigdata-intercorp-api"
+        detail:
+          event:
+            - referenceCreated
+            - referenceUpdated
+          referenceType:
+            - branch          
+      State: ENABLED
+      Targets:            
+        - Arn: !Sub "arn:aws:events:${AWS::Region}:${childAccountId}:event-bus/default"
+          Id: !Sub ibk-${team}-${stack}-${application}-bus-${enviroment}
+          RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/ibk-${team}-${stack}-${application}-${enviroment}-foundations-eventbus
+          
+  EventBusRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub "ibk-${team}-${stack}-${application}-${enviroment}-foundations-eventbus"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "events.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        - PolicyName: !Sub "ibk-${team}-${stack}-${application}-${enviroment}-eventbus-policy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "events:PutEvents"
+                Resource:
+                  - !Sub "arn:aws:events:${AWS::Region}:${childAccountId}:event-bus/default"                  
+  
+  rCodeCommitRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: Role assumed by CodeBuild/CodePipeline in child AWS account
+      Path: /
+      RoleName: !Sub ibk-${team}-${stack}-${application}-codecommit-${enviroment}
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:                
+                - !Sub "arn:aws:iam::${childAccountId}:root"
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - codecommit:CreateApprovalRuleTemplate
+                  - codecommit:DeleteApprovalRuleTemplate
+                  - codecommit:GetApprovalRuleTemplate
+                  - codecommit:ListApprovalRuleTemplates
+                  - codecommit:ListRepositories
+                  - codecommit:ListRepositoriesForApprovalRuleTemplate
+                  - codecommit:UpdateApprovalRuleTemplateContent
+                  - codecommit:UpdateApprovalRuleTemplateDescription
+                  - codecommit:UpdateApprovalRuleTemplateName
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - codecommit:Get*
+                  - codecommit:Describe*
+                  - codecommit:List*
+                  - codecommit:GitPull
+                  - codecommit:CancelUploadArchive
+                  - codecommit:GetBranch
+                  - codecommit:GetCommit
+                  - codecommit:GetUploadArchiveStatus
+                  - codecommit:UploadArchive
+                Resource:
+                  - !Sub "arn:aws:codecommit:${AWS::Region}:${AWS::AccountId}:ibk-bigdata-intercorp-cicd"
+                  - !Sub "arn:aws:codecommit:${AWS::Region}:${AWS::AccountId}:ibk-bigdata-intercorp-api"
+              - Effect: Allow
+                Action:
+                  - s3:Get*
+                  - s3:ListBucket*
+                  - s3:Put*
+                Resource:
+                  - !Sub "arn:aws:s3:::sdlf-cfn-artifacts-${AWS::Region}-${childAccountId}"
+                  - !Sub "arn:aws:s3:::sdlf-cfn-artifacts-${AWS::Region}-${childAccountId}/*"
+                  - !Sub "arn:aws:s3:::sdlf-artifactorystore-${AWS::Region}-${childAccountId}-bucket"
+                  - !Sub "arn:aws:s3:::sdlf-artifactorystore-${AWS::Region}-${childAccountId}-bucket/*"
+                  
+              - Effect: Allow
+                Action:
+                  - kms:Encrypt
+                  - kms:Decrypt
+                  - kms:ReEncrypt*
+                  - kms:GenerateDataKey*
+                  - kms:DescribeKey
+                  - kms:List*
+                  - kms:Describe*
+                Resource: !Sub "arn:aws:kms:${AWS::Region}:${childAccountId}:key/*"
+  

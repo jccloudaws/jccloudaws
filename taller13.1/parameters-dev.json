@@ -1,0 +1,39 @@
+[
+
+    {
+        "ParameterKey": "team",
+        "ParameterValue": "rpa"
+    },
+    {
+        "ParameterKey": "stack",
+        "ParameterValue": "cicd"
+    },
+    {
+        "ParameterKey": "application",
+        "ParameterValue": "taller13"
+    },
+    {
+        "ParameterKey": "enviroment",
+        "ParameterValue": "dev"
+    },    
+    {
+        "ParameterKey": "branchName",
+        "ParameterValue": "dev"
+    },
+    {
+        "ParameterKey": "repositoryName",
+        "ParameterValue": "rpa-api-cicd"
+    },    
+    {
+        "ParameterKey":"artifactoryStore",
+        "ParameterValue":"rpa-cfn-artifacts-40888866-us-east-1"
+    },
+    {
+        "ParameterKey": "pylintScore",
+        "ParameterValue": "6"
+    },
+    {
+        "ParameterKey": "KMSInfraKeyId",
+        "ParameterValue": "arn:aws:kms:us-east-1:433029499227:key/523b642d-7401-4998-95bc-889d27f4edd2"
+    }
+]

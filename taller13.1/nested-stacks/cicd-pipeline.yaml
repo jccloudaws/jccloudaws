@@ -1,0 +1,359 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CodePipeline templates for api taller13'
+
+Parameters:
+
+  codebuildrole: 
+    Type: String
+    
+  codepipelineRole:
+    Type: String
+  
+  repositoryName:
+    Type: String
+  
+  branchName:
+    Type: String
+  
+  artifactoryStore:
+    Type: String
+
+  team:
+    Type: String
+    
+  enviroment: 
+    Type: String
+    
+  stack: 
+    Type: String
+  
+  pylintScore:
+    Type: String
+    
+  application:
+    Type: String  
+    
+    
+Resources:
+  rCICDQAPylint:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub "${team}-${stack}-cicd-devops-codebuild-pylint"
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:4.0
+        Type: LINUX_CONTAINER
+        EnvironmentVariables:
+          - Name: pylintScore
+            Value: !Ref pylintScore
+      ServiceRole: !Ref codebuildrole
+        #Fn::GetAtt: [ codebuildrole, Arn ]
+        
+      Source:
+        BuildSpec: |
+          version: 0.2
+          phases:
+            install:
+              runtime-versions:
+                python: 3.7
+              commands:
+                - echo "Instalando Basic Calculator"
+                - apt-get -qq update -y
+                - apt-get -qq install -y bc
+            build:
+              commands:
+                - echo "Ejecutando Pylint stage"
+                - echo "Instando pylint"
+                - pip install pylint
+                - pylint --generate-rcfile > .pylintrc
+                - sed -i 's/ignored-modules=/ignored-modules=datalake_library/g' .pylintrc
+                - touch results.txt
+                - |-
+                  for file in $(find . -name "*py");
+                  do
+                    pylint $file
+                    score=$(pylint $file | grep 'Your code has been rated' | awk '{print $7}' | cut -d/ -f1 -)
+                    if [ ! "1" -eq $(echo $score'>'${pylintScore} | bc -l) ]; then touch FAIL; fi
+                    echo "$file|$score" >> results.txt
+                  done
+                - cat results.txt
+                - |-
+                  if [ -f FAIL ]; then
+                    echo "Uno o varios archivos no pasaron el análisis con Pylint. Verifique el log de salida"
+                    exit 1
+                  else
+                    exit 0
+                  fi
+        Type: CODEPIPELINE
+      TimeoutInMinutes: 10
+  
+  rCICDValidationCfnLint:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub "${team}-${stack}-cicd-devops-codebuild-cfnlint"
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:4.0
+        Type: LINUX_CONTAINER
+      ServiceRole: !Ref codebuildrole
+        #Fn::GetAtt: [ codebuildrole, Arn ]  
+      Source:
+        BuildSpec: |
+          version: 0.2
+          phases:
+            install:
+              runtime-versions:
+                python: 3.7
+            build:
+              commands:
+                - echo "Ejecutando cfn-lint stage"
+                - pip install cfn-lint > /dev/null
+                - pip3 install cfn-lint --quiet
+                - echo "Iniciando revisión de templates YAML"
+                - touch results.txt
+                - echo "find files yamls"
+                - ls
+                - set +e;
+                #- cfn-lint --ignore-checks W2 E3030 --template template.yaml >> results.txt
+                - |-
+                  cfn-lint --template template.yaml --region us-east-1 --ignore-checks W
+                - cat results.txt
+                - |-
+                  if [ $(cat results.txt|wc -l) -gt 0 ]; then
+                    echo "Uno o varios archivos no pasaron el análisis con cfnlint. Verifique el log de salida"
+                    exit 1
+                  fi
+        Type: CODEPIPELINE
+      TimeoutInMinutes: 10
+  
+  rCICDBuild:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Name: !Sub "${team}-${stack}-cicd-devops-codebuild-build"
+      Description: "Build of the application"
+      #EncryptionKey: !Ref pKMSInfraKeyId
+      Environment:
+          EnvironmentVariables:
+            - Name: ARTIFACTORY_BUCKET
+              Type: PLAINTEXT
+              Value: !Ref artifactoryStore
+            - Name: PREFIX_BUCKET
+              Type: PLAINTEXT
+              Value: !Ref stack
+          ComputeType: BUILD_GENERAL1_SMALL
+          Image: aws/codebuild/standard:4.0
+          Type: LINUX_CONTAINER
+      QueuedTimeoutInMinutes: 60
+      ServiceRole: !Ref codebuildrole
+        #Fn::GetAtt: [ codebuildrole, Arn ]
+      Source:
+        BuildSpec: |
+          version: 0.2
+          phases:
+            install:
+              runtime-versions:
+                python: 3.7
+            build:
+              commands:
+                - pwd
+                - ls
+                - aws cloudformation package --template-file ./template.yaml --s3-bucket $ARTIFACTORY_BUCKET --s3-prefix $PREFIX_BUCKET --output-template-file ./output/packaged-template.yaml
+                - aws cloudformation validate-template --template-body file://./template.yaml
+          artifacts:
+            files:
+              - '*'
+              - '**/*'
+        Type: CODEPIPELINE
+      TimeoutInMinutes: 5
+  
+  rCICDDeploy:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Name: !Sub "${team}-${stack}-cicd-devops-codebuild-deploy"
+      Description: "Build of the application"
+      #EncryptionKey: !Ref pKMSInfraKeyId
+      Environment:
+          EnvironmentVariables:
+            - Name: ENVIROMENT
+              Type: PLAINTEXT
+              Value: !Ref enviroment
+            - Name: ARTIFACTORY_BUCKET
+              Type: PLAINTEXT
+              Value: !Ref artifactoryStore
+            - Name: PREFIX_BUCKET
+              Type: PLAINTEXT
+              Value: !Ref stack
+          ComputeType: BUILD_GENERAL1_SMALL
+          Image: aws/codebuild/standard:4.0
+          Type: LINUX_CONTAINER
+      QueuedTimeoutInMinutes: 60
+      ServiceRole: !Ref codebuildrole
+        #Fn::GetAtt: [ codebuildrole, Arn ]
+      Source:
+        BuildSpec: |
+          version: 0.2
+          phases:
+            install:
+              runtime-versions:
+                python: 3.7
+            build:
+              commands:
+                 - |-
+                    export ENV=$ENVIROMENT                      
+                    chmod 775 ./deploy.sh
+                    ./deploy.sh 
+          artifacts:
+            files:
+              - '*'
+              - '**/*'
+        Type: CODEPIPELINE
+      TimeoutInMinutes: 5
+  
+  rtaller13Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name: !Sub "${team}-${stack}-${enviroment}-taller13-pipeline"
+      RoleArn: !Ref codepipelineRole
+      ArtifactStore:
+        Type: S3
+        Location: !Ref artifactoryStore
+      Stages:
+        - Name: CodeSource
+          Actions:
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: '1'
+                Provider: CodeCommit
+              OutputArtifacts:
+                - Name: SourceArtifact
+              Configuration:
+                RepositoryName: !Ref repositoryName
+                BranchName: !Ref branchName
+                PollForSourceChanges: "false"
+              RunOrder: 1
+        
+        -
+          Name: QA
+          Actions:
+            -
+              Name: Pylint
+              InputArtifacts:
+                - Name: SourceArtifact
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: '1'
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref rCICDQAPylint
+              RunOrder: 1
+        
+        -
+          Name: VALIDATION
+          Actions:
+            - Name: cfnlint
+              InputArtifacts:
+                - Name: SourceArtifact
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: '1'
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref rCICDValidationCfnLint
+              RunOrder: 1
+        -
+          Name: Build
+          Actions:
+            -
+              Name: Build
+              InputArtifacts:
+              - Name: SourceArtifact
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: '1'
+                Provider: CodeBuild
+              OutputArtifacts:
+                - Name: BuildArtifact
+              Configuration:
+                ProjectName: !Ref rCICDBuild
+              RunOrder: 1
+        
+        -
+          Name: Deploy
+          Actions:
+            -
+              Name: Deploy
+              InputArtifacts:
+              - Name: BuildArtifact
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: '1'
+                Provider: CodeBuild
+              OutputArtifacts:
+                - Name: DeploydArtifact
+              Configuration:
+                ProjectName: !Ref rCICDDeploy
+              RunOrder: 1
+      
+  
+  rPipelineCloudWatchEventRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - events.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        -
+          PolicyName: !Sub "${team}-${stack}-${enviroment}-cloudwatchevents-policy"
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action: codepipeline:StartPipelineExecution
+                Resource: !Sub "arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${team}-${stack}-${enviroment}-taller13-pipeline"
+
+
+  rPipelineTriggerEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: !Sub "Run ${team} ${stack} Pipeline on ${repositoryName} repository update"
+      EventPattern:
+        source:
+          - aws.codecommit
+        detail-type:
+          - 'CodeCommit Repository State Change'
+        resources:
+          - !Sub "arn:aws:codecommit:${AWS::Region}:${AWS::AccountId}:${repositoryName}"
+        detail:
+          event:
+            - referenceCreated
+            - referenceUpdated
+          referenceType:
+            - branch
+          referenceName:
+            - !Ref branchName
+      Targets:
+        - Arn: !Sub "arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${team}-${stack}-${enviroment}-taller13-pipeline"
+          Id: !Sub "${repositoryName}-trigger"
+          RoleArn: !GetAtt rPipelineCloudWatchEventRole.Arn

@@ -1,0 +1,23 @@
+# This is a pipeline to mirror the CodeCommit AWS Repository
+image: atlassian/default-image:2
+
+pipelines:
+  default:
+    - step:
+        script:
+         - export GIT_TRACE_PACKET=1
+         - export GIT_TRACE=1
+         - export GIT_CURL_VERBOSE=1
+         - echo $CodeCommitKey > ~/.ssh/codecommit_rsa.tmp
+         - base64 -d ~/.ssh/codecommit_rsa.tmp > ~/.ssh/id_rsa
+         - chmod 400 ~/.ssh/id_rsa
+         - cat ~/.ssh/id_rsa
+         - echo $CodeCommitConfig > ~/.ssh/config.tmp
+         - base64 -d  ~/.ssh/config.tmp > ~/.ssh/config
+         - cat ~/.ssh/config
+         - set +e
+         - ssh -o StrictHostKeyChecking=no $CodeCommitHost
+         - set -e
+         - git remote set-url origin ssh://$CodeCommitRepo
+         - git pull origin $BITBUCKET_BRANCH         
+         - git push origin $BITBUCKET_BRANCH

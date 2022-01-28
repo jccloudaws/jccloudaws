@@ -1,0 +1,68 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Stack CICD
+Parameters:
+  team:
+    Type: String
+  stack:
+    Type: String
+  enviroment:
+    Type: String
+  application:
+    Type: String
+  repositoryName:
+    Type: String
+  branchName:
+    Type: String
+  pylintScore:
+    Type: String
+  KMSInfraKeyId:
+    Type: String
+  artifactoryStore:
+    Type: String
+Resources:
+  iamstack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3.us-east-1.amazonaws.com/rpa-cfn-artifacts-40888866-us-east-1/RPA-TALLER-CICD-13/1121bc343d66a93138f741f8965fe4d6.template
+      Parameters:
+        team:
+          Ref: team
+        application:
+          Ref: application
+        enviroment:
+          Ref: enviroment
+        stack:
+          Ref: stack
+        KMSInfraKeyId:
+          Ref: KMSInfraKeyId
+  Pipelinestack:
+    DependsOn:
+    - iamstack
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3.us-east-1.amazonaws.com/rpa-cfn-artifacts-40888866-us-east-1/RPA-TALLER-CICD-13/1256328142590f94d73eaf4057368bb5.template
+      Parameters:
+        team:
+          Ref: team
+        repositoryName:
+          Ref: repositoryName
+        branchName:
+          Ref: branchName
+        application:
+          Ref: application
+        enviroment:
+          Ref: enviroment
+        stack:
+          Ref: stack
+        artifactoryStore:
+          Ref: artifactoryStore
+        pylintScore:
+          Ref: pylintScore
+        codebuildrole:
+          Fn::GetAtt:
+          - iamstack
+          - Outputs.oCodeBuildRole
+        codepipelineRole:
+          Fn::GetAtt:
+          - iamstack
+          - Outputs.orCodePipelineRole

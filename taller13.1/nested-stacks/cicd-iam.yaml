@@ -1,0 +1,552 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CodePipeline templates for deploy ifrs'
+
+Parameters:
+  team:
+    Type: String
+  enviroment:
+    Type: String    
+  stack: 
+    Type: String  
+  application:
+    Type: String  
+  KMSInfraKeyId:
+    Type: String
+  
+Resources:
+  CodeBuildRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub "rpa-${team}-${stack}-${application}-${enviroment}-cicd-codebuild-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "codebuild.amazonaws.com"
+            Action:
+             - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        -
+          PolicyName: !Sub "rpa-${team}-${stack}-${application}-${enviroment}-cicd-codebuild-policy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action:
+                  - "cloudformation:CreateChangeSet"
+                  - "cloudformation:CreateStack"
+                  - "cloudformation:DeleteChangeSet"
+                  - "cloudformation:DeleteStack"
+                  - "cloudformation:DescribeChangeSet"
+                  - "cloudformation:DescribeStacks"
+                  - "cloudformation:ExecuteChangeSet"
+                  - "cloudformation:SetStackPolicy"
+                  - "cloudformation:UpdateStack"
+                  - "cloudformation:Get*"
+                  - "cloudformation:List*"
+                Resource: "*"
+              -
+                Effect: "Allow"
+                Action:
+                  - "cloudformation:ValidateTemplate"
+                Resource: "*"
+              - 
+                Effect: "Allow"
+                Action:
+                  - "ssm:GetParameters"
+                  - "ssm:PutParameter"
+                Resource: "*"
+              -
+                Effect: "Allow"
+                Action:
+                  - "codecommit:ListBranches"
+                  - "codecommit:ListRepositories"
+                  - "codecommit:BatchGetRepositories"
+                  - "codecommit:Get*"
+                  - "codecommit:GitPull"
+                Resource:
+                  - Fn::Sub: "arn:aws:codecommit:${AWS::Region}:${AWS::AccountId}:*"
+              -
+                Effect: "Allow"
+                Action:
+                  - "iam:DeleteRole"
+                  - "iam:DeleteRolePolicy"
+                  - "iam:GetRole"
+                  - "iam:GetRolePolicy"
+                  - "iam:ListRolePolicies"
+                  - "iam:PutRolePolicy"
+                  - "iam:UntagRole"
+                  - "iam:UpdateRole"
+                  - "iam:UpdateRoleDescription"
+                  - "iam:TagRole"
+                  - "iam:CreateRole"
+                  - "iam:PassRole"
+                  - "iam:DetachRolePolicy"
+                  - "iam:AttachRolePolicy"
+                  - "iam:UpdateAssumeRolePolicy"
+                Resource: "*"                  
+              -
+                Effect: "Allow"
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                  - "logs:DescribeLogGroups"
+                  - "logs:DeleteLogGroup"
+                Resource:
+                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*"
+                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group::log-stream:*"
+                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/rpa-*:log-stream:*"                  
+              -
+                Effect: Allow
+                Action:
+                  - "s3:ListBucket"
+                Resource: "*"              
+              -
+                Effect: "Allow"
+                Action:
+                  - "kms:DescribeKey"
+                  - "kms:Encrypt"
+                  - "kms:Decrypt"
+                  - "kms:ReEncrypt*"
+                  - "kms:GenerateDataKey*"
+                  - "kms:CreateGrant"
+                Resource:
+                  - !Ref KMSInfraKeyId
+              -
+                Effect: Allow
+                Action:
+                  - "s3:GetObject"
+                  - "s3:PutObject"
+                  - "s3:GetObjectVersion"
+                  - "s3:GetBucketAcl"
+                  - "s3:GetBucketLocation"                  
+                  - "s3:CreateBucket"
+                  - "s3:DeleteBucket"
+                  - "s3:PutBucketNotification"
+                  - "s3:GetBucketTagging"                                  
+                  - "s3:GetBucketNotification"
+                  - "s3:GetBucketPolicy"
+                  - "s3:PutEncryptionConfiguration"
+                  - "s3:GetObjectAcl"
+                  - "s3:DeleteObject"                                    
+                Resource:  "*"
+              - Effect: Allow
+                Action:                  
+                  - "sns:ListTagsForResource"
+                  - "sns:GetTopicAttributes"
+                  - "sns:DeleteTopic"
+                  - "sns:CreateTopic"
+                  - "sns:SetTopicAttributes"
+                  - "sns:Subscribe"
+                  - "sns:ConfirmSubscription"
+                  - "sns:SetSubscriptionAttributes"
+                  - "sns:Unsubscribe"
+                  - "sns:GetSubscriptionAttributes"
+                Resource:
+                  - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:rpa-*
+              -
+                Effect: Allow
+                Action:
+                  - "lambda:AddPermission"
+                  - "lambda:RemovePermission"
+                  - "lambda:GetFunction"
+                  - "lambda:CreateFunction"
+                  - "lambda:TagResource"
+                  - "lambda:GetLayerVersion"
+                  - "lambda:PublishLayerVersion"
+                  - "lambda:GetAccountSettings"
+                  - "lambda:GetFunctionConfiguration"
+                  - "lambda:GetLayerVersionPolicy"
+                  - "lambda:UntagResource"
+                  - "lambda:ListTags"
+                  - "lambda:DeleteLayerVersion"
+                  - "lambda:DeleteFunctionEventInvokeConfig"
+                  - "lambda:ListLayerVersions"
+                  - "lambda:ListLayers"
+                  - "lambda:DeleteFunction"
+                  - "lambda:GetAlias"
+                  - "lambda:UpdateFunctionEventInvokeConfig"
+                  - "lambda:ListFunctions"
+                  - "lambda:GetEventSourceMapping"
+                  - "lambda:InvokeFunction"                  
+                  - "lambda:UpdateFunctionConfiguration"
+                  - "lambda:UpdateAlias"
+                  - "lambda:UpdateFunctionCode"
+                  - "lambda:GetFunctionEventInvokeConfig"
+                  - "lambda:ListEventSourceMappings"
+                  - "lambda:DeleteAlias"
+                  - "lambda:PublishVersion"
+                  - "lambda:GetPolicy"
+                  - "lambda:CreateAlias"
+                Resource: 
+                  - !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:rpa-*
+                  - !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:layer:rpa-*
+              - 
+                Effect: Allow
+                Action:
+                  - "states:ListStateMachines"
+                  - "states:DescribeStateMachine"
+                  - "states:DescribeExecution"
+                  - "states:ListExecutions"
+                  - "states:UpdateStateMachine"
+                  - "states:DeleteStateMachine"
+                  - "states:StartExecution"
+                  - "states:StopExecution"
+                  - "states:StartSyncExecution"
+                  - "states:CreateStateMachine"
+                  - "states:TagResource"
+                  - "states:UntagResource"
+                Resource:                    
+                  - !Sub arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:rpa-*
+              - 
+                Effect: Allow
+                Action:
+                  - "codepipeline:*"                  
+                Resource: "*"          
+                  #- !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:rpa-*                  
+              - 
+                Effect: Allow
+                Action:                  
+                  - "cognito-idp:DescribeUserPool"
+                  - "cognito-idp:CreateUserPoolClient"
+                  - "cognito-idp:CreateUserPool"
+                  - "cognito-idp:DeleteUserPool"
+                  - "cognito-idp:DeleteUserPoolClient"
+                  - "cognito-idp:UpdateUserPool"
+                  - "cognito-idp:DescribeUserPool"
+                  - "cognito-idp:CreateIdentityProvider"
+                  - "cognito-idp:TagResource"
+                  - "cognito-idp:UntagResource"                  
+                Resource: "*"                            
+              - 
+                Effect: Allow
+                Action:                  
+                  - "cognito-identity:GetId"          
+                  - "cognito-identity:UntagResource"
+                  - "cognito-identity:DeleteIdentityPool"
+                  - "cognito-identity:CreateIdentityPool"                  
+                  - "cognito-identity:TagResource"
+                  - "cognito-identity:SetIdentityPoolRoles"           
+                Resource: "*" 
+              - 
+                Effect: Allow
+                Action:
+                  - "apigateway:POST"  
+                  - "apigateway:DELETE"
+                  - "apigateway:PUT"
+                  - "apigateway:PATCH"
+                  - "apigateway:POST"
+                  - "apigateway:GET"
+                  - "apigateway:UpdateRestApiPolicy"
+                Resource:                    
+                  - !Sub arn:aws:apigateway:${AWS::Region}::/restapis
+                  - !Sub arn:aws:apigateway:${AWS::Region}::/restapis/*
+              - 
+                Effect: Allow
+                Action:                  
+                  - "dynamodb:*"
+                Resource: "*" 
+  
+  rCodePipelineRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub "rpa-${team}-${stack}-${application}-${enviroment}-codepipeline-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "cloudformation.amazonaws.com"
+                - "codepipeline.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        -
+          PolicyName: !Sub "rpa-${team}-${stack}-${application}-${enviroment}-codepipeline-policy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action: "iam:PassRole"
+                Resource: "*"
+                Condition:
+                  StringEqualsIfExists:
+                    "iam:PassedToService":
+                      - "cloudformation.amazonaws.com"
+                      - "lambda.amazonaws.com"
+              -
+                Effect: "Allow"
+                Action:
+                  - "iam:PassRole"
+                Resource:                        
+                  - !Sub "arn:aws:iam::${AWS::AccountId}:role/*"                  
+              -
+                Effect: "Allow"
+                Action:
+                  - "iam:ListRoles"
+                  - "iam:CreateRole"
+                  - "iam:AttachRolePolicy"
+                  - "iam:DetachRolePolicy"
+                  - "iam:DeleteRole"
+                  - "iam:DeleteRolePolicy"
+                  - "iam:GetRole"
+                  - "iam:GetRolePolicy"
+                  - "iam:ListRolePolicies"
+                  - "iam:PutRolePolicy"
+                  - "iam:UntagRole"
+                  - "iam:UpdateRole"
+                  - "iam:UpdateRoleDescription"
+                  - "iam:TagRole"
+                Resource:
+                  - !Sub "arn:aws:iam::${AWS::AccountId}:role/*"              
+              -
+                Effect: "Allow"
+                Action:
+                  - "iam:ListPolicies"
+                  - "iam:ListPolicyVersions"
+                  - "iam:GetPolicy"
+                  - "iam:GetPolicyVersion"
+                  - "iam:CreatePolicy"
+                  - "iam:CreatePolicyVersion"
+                  - "iam:DeletePolicy"
+                  - "iam:DeletePolicyVersion"
+                Resource:
+                  - !Sub "arn:aws:iam::${AWS::AccountId}:policy/*"              
+              -
+                Effect: "Allow"
+                Action:
+                  - "codecommit:CancelUploadArchive"
+                  - "codecommit:GetBranch"
+                  - "codecommit:GetCommit"
+                  - "codecommit:GetUploadArchiveStatus"
+                  - "codecommit:UploadArchive"
+                Resource:
+                  - !Sub "arn:aws:codecommit:${AWS::Region}:${AWS::AccountId}:*"                  
+              -
+                Effect: "Allow"
+                Action:
+                  - "events:DescribeRule"
+                  - "events:PutRule"
+                  - "events:DeleteRule"
+                  - "events:RemoveTargets"
+                  - "events:PutTargets"
+                Resource: !Sub "arn:aws:events:${AWS::Region}:${AWS::AccountId}:rule/*"
+              -
+                Effect: "Allow"
+                Action:
+                  - "lambda:ListFunctions"
+                  - "lambda:GetLayerVersion"
+                Resource: "*"
+              -
+                Effect: "Allow"
+                Action:
+                  - "lambda:AddPermission"
+                  - "lambda:RemovePermission"
+                  - "lambda:CreateFunction"
+                  - "lambda:InvokeFunction"
+                  - "lambda:UpdateFunctionConfiguration"
+                  - "lambda:CreateAlias"
+                  - "lambda:DeleteFunction"
+                  - "lambda:GetFunction"
+                  - "lambda:PublishVersion"
+                  - "lambda:UpdateAlias"
+                  - "lambda:UpdateFunctionCode"
+                  - "lambda:UpdateFunctionConfiguration"
+                  - "lambda:GetFunctionConfiguration"
+                  - "lambda:TagResource"
+                  - "lambda:UntagResource"
+                  - "lambda:ListTags"
+                  - "lambda:DeleteFunctionConcurrency"
+                  - "lambda:PutFunctionConcurrency"
+                Resource: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:*"
+              -
+                Effect: "Allow"
+                Action:
+                  - "lambda:InvokeFunction"
+                Resource: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:*"
+              -
+                Effect: "Allow"
+                Action:
+                  - "lambda:CreateEventSourceMapping"
+                  - "lambda:GetEventSourceMapping"
+                  - "lambda:UpdateEventSourceMapping"
+                  - "lambda:DeleteEventSourceMapping"
+                Resource: "*"
+              -
+                Effect: "Allow"
+                Action:
+                  - "cloudformation:CreateStack"
+                  - "cloudformation:DeleteStack"
+                  - "cloudformation:DescribeStacks"
+                  - "cloudformation:UpdateStack"
+                  - "cloudformation:CreateChangeSet"
+                  - "cloudformation:DeleteChangeSet"
+                  - "cloudformation:DescribeChangeSet"
+                  - "cloudformation:ExecuteChangeSet"
+                  - "cloudformation:SetStackPolicy"
+                Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/*"
+              -
+                Effect: "Allow"
+                Action:
+                  - "cloudformation:DeleteChangeSet"
+                  - "cloudformation:DescribeChangeSet"
+                  - "cloudformation:CreateChangeSet"
+                  - "cloudformation:ExecuteChangeSet"
+                Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:aws:transform/*"
+              -
+                Effect: "Allow"
+                Action:
+                  - "cloudformation:ValidateTemplate"
+                Resource: "*"
+              -
+                Effect: "Allow"
+                Action:
+                  - "codebuild:BatchGetBuilds"
+                  - "codebuild:StartBuild"
+                  - "codebuild:CreateProject"
+                  - "codebuild:UpdateProject"
+                Resource: !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/*"
+              -
+                Effect: "Allow"
+                Action:
+                  - "states:ListStateMachines"
+                  - "states:ListActivities"
+                  - "states:CreateActivity"
+                  - "states:CreateStateMachine"
+                  - "states:TagResource"
+                Resource: !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:*"
+              -
+                Effect: "Allow"
+                Action:
+                  - "states:DescribeStateMachine"
+                  - "states:DescribeStateMachineForExecution"
+                  - "states:DeleteStateMachine"
+                  - "states:UpdateStateMachine"
+                Resource: !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:*"
+              -
+                Effect: "Allow"
+                Action:
+                  - "states:DescribeActivity"
+                  - "states:DeleteActivity"
+                  - "states:GetActivityTask"
+                Resource: !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:activity:*"
+              -
+                Effect: "Allow"
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:DescribeLogGroups"
+                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+              -
+                Effect: "Allow"
+                Action:
+                  - "logs:CreateLogStream"
+                  - "logs:DeleteLogStream"
+                  - "logs:DeleteLogGroup"
+                  - "logs:DescribeLogStreams"
+                  - "logs:PutLogEvents"
+                  - "logs:TagLogGroup"
+                  - "logs:PutSubscriptionFilter"
+                  - "logs:DeleteSubscriptionFilter"
+                  - "logs:DescribeSubscriptionFilters"
+                Resource:
+                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*:log-stream:*"
+                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*:log-stream:*"
+              -
+                Effect: "Allow"
+                Action:
+                  - "cloudwatch:DescribeAlarms"
+                  - "cloudwatch:SetAlarmState"
+                  - "cloudwatch:PutMetricAlarm"
+                  - "cloudwatch:PutMetricData"
+                  - "cloudwatch:DeleteAlarms"
+                Resource:
+                  - !Sub "arn:aws:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:*"
+              -
+                Effect: "Allow"
+                Action:
+                  - 'sqs:ListQueues'
+                Resource: !Sub "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:*"
+              -
+                Effect: "Allow"
+                Action:
+                  - 'sqs:TagQueue'
+                  - 'sqs:AddPermission'
+                  - 'sqs:ChangeMessageVisibility'
+                  - 'sqs:CreateQueue'
+                  - 'sqs:DeleteQueue'
+                  - 'sqs:ChangeMessageVisibilityBatch'
+                  - 'sqs:SetQueueAttributes'
+                  - 'sqs:GetQueueAttributes'
+                Resource: !Sub "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:*"              
+              -
+                Effect: "Allow"
+                Action:
+                  - 'ssm:AddTagsToResource'
+                  - 'ssm:DescribeParameters'
+                  - 'ssm:GetOpsSummary'
+                  - 'ssm:GetParameter'
+                  - 'ssm:GetParameterHistory'
+                  - 'ssm:GetParameters'
+                  - 'ssm:GetParametersByPath'
+                  - 'ssm:ListTagsForResource'
+                  - 'ssm:RemoveTagsFromResource'
+                Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/*"
+              -
+                Effect: "Allow"
+                Action:
+                  - 'ssm:PutParameter'
+                  - 'ssm:DeleteParameter'
+                Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/*"                            
+              -
+                Effect: Allow
+                Action:
+                  - dynamodb:CreateTable
+                  - dynamodb:DescribeTable
+                Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*
+              -
+                Effect: "Allow"
+                Action:
+                  - "kms:DescribeKey"
+                  - "kms:Encrypt"
+                  - "kms:Decrypt"
+                  - "kms:ReEncrypt*"
+                  - "kms:GenerateDataKey*"
+                  - "kms:CreateGrant"
+                Resource:
+                  - !Ref KMSInfraKeyId
+              -
+                Effect: "Allow"
+                Action:
+                  - 's3:ListBuckets'
+                  - 's3:ListBucket'
+                  - 's3:CreateBucket'
+                  - 's3:DeleteBucket'
+                  - 's3:ListObjectsV2'
+                  - 's3:PutObject'
+                  - 's3:GetObject'
+                  - 's3:SetBucketEncryption'
+                  - 's3:GetEncryptionConfiguration'
+                  - 's3:PutEncryptionConfiguration'
+                  - 's3:PutBucketAcl'
+                  - 's3:PutBucketLogging'
+                  - 's3:PutBucketVersioning'
+                  - 's3:PutBucketPolicy'
+                  - 's3:DeleteBucketPolicy'
+                Resource: "*"
+                
+Outputs:  
+  oCodeBuildRole:
+    Description: "Arn of the KMS infrastructure key"
+    Value: !GetAtt CodeBuildRole.Arn              
+  orCodePipelineRole:
+    Description: "Arn of the KMS infrastructure key"
+    Value: !GetAtt rCodePipelineRole.Arn
