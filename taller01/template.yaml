@@ -17,40 +17,19 @@ Parameters:
     Type: String    
   
 Resources:
-  FunctionCF:
-    Type: AWS::Lambda::Function
+  LambdaDemo:
+    Type: AWS::Serverless::Function
     Properties:
-      Code: ./src
+      CodeUri: ./src
       Handler: lambda_function.lambda_handler
-      Runtime: python3.7
+      Runtime: python3.6
       FunctionName:
-        !Sub "rpa-${team}-${application}-${stack}-${environment}-lambda-cf"
-      Description: Python Function to return specific TimeZone time
+        !Sub "ibk-${team}-${application}-${stack}-${environment}-lambda-Sam"
+      Description: "Lambda taller01"
       MemorySize: 128
-      Timeout: 3
+      Timeout: 10
       Role: !GetAtt rRoleLambdaExecution.Arn
   
-  #FunctionSam:
-  #  Type: AWS::Serverless::Function
-  #  Properties:
-  #    CodeUri: ./src
-  #    Handler: lambda_function.lambda_handler
-  #    Runtime: python3.7
-  #    FunctionName:
-  #      !Sub "ibk-${team}-${application}-${stack}-${environment}-lambda-Sam"
-  #    Description: "Lambda taller01"
-  #    MemorySize: 128
-  #    Timeout: 3
-  #    #Role: !GetAtt rRoleLambdaExecution.Arn        
-  
-  #FunctionLogGroup:
-  #  Type: "AWS::Logs::LogGroup"
-  #  Properties:
-  #    LogGroupName: !Join
-  #      - ""
-  #      - - /aws/lambda/
-  #        - !Sub "ibk-${team}-${application}-${stack}-${environment}-lambda"
-
   rRoleLambdaExecution:
     Type: "AWS::IAM::Role"
     Properties:
@@ -72,7 +51,20 @@ Resources:
                 Action:
                   - logs:CreateLogStream
                   - logs:CreateLogGroup
-                Resource: !Sub "arn:aws:logs:us-east-1:433029499227:log-group:/aws/lambda/ibk-rpa-taller01-lambda-dev-lambda-cf:*"
+                  - logs:PutLogEvents
+                Resource: "*"
+                
+              - Sid: S3Policy
+                Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:ListBucket
+                  - s3:GetBucketLocation
+                Resource: 
+                  - !Sub "arn:aws:s3:::account-juan-result-${environment}"
+                  - !Sub "arn:aws:s3:::account-juan-result-${environment}/*"
+              
                 
 #Outputs:
 #  lambda:

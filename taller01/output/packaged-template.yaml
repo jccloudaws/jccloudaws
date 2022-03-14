@@ -15,19 +15,17 @@ Parameters:
     Description: name Stack
     Type: String
 Resources:
-  FunctionCF:
-    Type: AWS::Lambda::Function
+  LambdaDemo:
+    Type: AWS::Serverless::Function
     Properties:
-      Code:
-        S3Bucket: rpa-cfn-artifacts-41510936-us-east-1
-        S3Key: RPA-TALLER-LAMBDA-01/52077ea6eb95660e51a44658ceb32537
+      CodeUri: s3://rpa-cfn-artifacts-40888866-us-east-1/RPA-TALLER-LAMBDA-01/5b3206a40f5eb26904dd093e4d07f052
       Handler: lambda_function.lambda_handler
-      Runtime: python3.7
+      Runtime: python3.6
       FunctionName:
-        Fn::Sub: ibk-${team}-${application}-${stack}-${environment}-lambda-cf
-      Description: Python Function to return specific TimeZone time
+        Fn::Sub: ibk-${team}-${application}-${stack}-${environment}-lambda-Sam
+      Description: Lambda taller01
       MemorySize: 128
-      Timeout: 5
+      Timeout: 10
       Role:
         Fn::GetAtt:
         - rRoleLambdaExecution
@@ -46,7 +44,7 @@ Resources:
           Action: sts:AssumeRole
       Policies:
       - PolicyName:
-          Fn::Sub: ibk-${team}-${application}-${stack}-${environment}-policy
+          Fn::Sub: rpa-${team}-${application}-${stack}-${environment}-policy
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
@@ -57,3 +55,13 @@ Resources:
             - logs:CreateLogGroup
             - logs:PutLogEvents
             Resource: '*'
+          - Sid: S3Policy
+            Effect: Allow
+            Action:
+            - s3:PutObject
+            - s3:GetObject
+            - s3:ListBucket
+            - s3:GetBucketLocation
+            Resource:
+            - Fn::Sub: arn:aws:s3:::account-juan-result-${environment}
+            - Fn::Sub: arn:aws:s3:::account-juan-result-${environment}/*
